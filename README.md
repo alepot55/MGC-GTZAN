@@ -1,4 +1,4 @@
-# Music Genre Classification: From Reproducibility to a New SOTA
+# Music Genre Classification: From Reproducibility to a SOTA
 
 **Authors:** Alessandro Potenza, Camilla Sed  
 **Course:** Numerical Analysis for Machine Learning, Politecnico di Milano
@@ -11,7 +11,7 @@ This project provides a rigorous and reproducible investigation into Music Genre
 
 Our primary contribution is twofold:
 1.  **Establishing a Gold-Standard Pipeline:** We designed and implemented a data pre-processing and evaluation framework that explicitly prevents data leakage, a common pitfall in MGC research.
-2.  **A Systematic Architectural Study:** Using this robust pipeline, we conducted a comparative analysis of three distinct deep learning architectures. This study culminates in establishing a new, reliable State-of-the-Art (SOTA) performance on GTZAN and provides a clear narrative on architectural evolution for this specific task.
+2.  **A Systematic Architectural Study:** Using this robust pipeline, we conducted a comparative analysis of three distinct deep learning architectures. This study culminates in establishing a reliable State-of-the-Art (SOTA) performance on GTZAN and provides a clear narrative on architectural evolution for this specific task.
 
 Our final **U-Net-inspired classifier achieves a test accuracy of 83.5%**, demonstrating the superiority of a multi-scale feature learning approach. The entire project, from data preparation to final analysis, is documented and open-sourced to ensure full transparency and reproducibility.
 

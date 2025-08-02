@@ -1,4 +1,4 @@
-# Music Genre Classification: From Reproducibility to a SOTA
+# State-of-the-Art Music Genre Classification
 
 **Authors:** Alessandro Potenza, Camilla Sed  
 **Course:** Numerical Analysis for Machine Learning, Politecnico di Milano

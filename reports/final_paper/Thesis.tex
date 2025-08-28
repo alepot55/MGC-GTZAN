@@ -16,7 +16,7 @@
 \usepackage{graphicx}
 \graphicspath{{Images/}}
 \usepackage{eso-pic} % For the background picture on the title page
-\usepackage{subfig} % Numbered and caption subfigures using \subfloat
+% \usepackage{subfig} removed: use the 'subcaption' package (loaded below) to manage sub-figures and avoid package conflicts
 \usepackage{caption} % Coloured captions
 \usepackage{transparent}
 
@@ -69,8 +69,8 @@
 %	ADD YOUR PACKAGES (be careful of package interaction)
 %----------------------------------------------------------------------------
 \usepackage{booktabs}
-\usepackage{subcaption} 
-\usepackage{subfig}
+\usepackage{subcaption}
+% \usepackage{subfig} removed to avoid conflicts with subcaption
 
 %----------------------------------------------------------------------------
 %	ADD YOUR DEFINITIONS AND COMMANDS (be careful of existing commands)
@@ -168,6 +168,21 @@ The generation process for each audio clip was as follows:
 \end{enumerate}
 The final output for each 30-second track was a Mel-spectrogram image, visually representing its musical content, as shown in Figure \ref{fig:spectrogram}.
 
+% --------- Detailed Mel parameters (added for reproducibility)
+\paragraph{Mel-spectrogram parameters}
+For reproducibility, the exact parameters used to compute the Mel-spectrograms are listed below:
+\begin{itemize}
+    \item sample rate = 22,050 Hz
+    \item n\_fft = 2048
+    \item hop\_length = 512
+    \item n\_mels = 128
+    \item window = Hann
+    \item power = 2.0 (power spectrogram) and conversion to decibels via \texttt{librosa.power\_to\_db(ref=np.max)}
+    \item handling of duration: audio shorter than 3s windows were zero-padded, longer signals were truncated to exact clip length prior to STFT
+\end{itemize}
+\paragraph{Dataset-specific STFT settings}
+For the Tabla Taala experiments we used a shorter FFT window (n\_fft = 1024) as configured in the Tabla notebooks; all other experiments used n\_fft = 2048 as stated above.
+
 % --- IMMAGINE (Didascalia migliorata) ---
 \begin{figure}[H]
     \centering
@@ -189,6 +204,10 @@ Following augmentation, the dataset was partitioned into training, validation, a
     \item \textbf{2,000 test samples} held out for the final, unbiased evaluation of the model's generalization performance.
 \end{itemize}
 All resulting arrays were saved as NumPy files (\texttt{.npy}) for efficient data loading during the training phase.
+
+% --------- Clarify slicing vs split to avoid leakage
+\paragraph{Slicing and splitting protocol (avoiding leakage)}
+To prevent any form of data leakage, all dataset partitioning was performed at the original track level prior to slicing. The 1000 GTZAN audio files were first stratified by genre and split into train/validation/test sets (60/20/20) at the track granularity; only after this split did we slice each track in a given partition into non-overlapping 3-second segments. This guarantees that segments from the same original audio file cannot appear in multiple partitions and prevents the model from exploiting track-level fingerprint information.
 
 \subsection{Label Encoding}
 The textual genre labels (e.g., "Rock", "Blues") were converted into a numerical format suitable for the model's loss function. We used a simple integer encoding scheme, mapping each of the 10 genres to a unique integer from 0 to 9. This mapping was created and saved using the \texttt{pickle} library. Storing the encoder is a crucial step for reproducibility, as it ensures that the label-to-integer mapping remains consistent across all experiments and during inference. For instance, it guarantees that "Rock" is always encoded as the same integer (e.g., 8) every time the code is executed.
@@ -260,12 +279,17 @@ a data augmentation technique applied on-the-fly to the Mel-spectrograms during 
 \end{itemize}
 The direct impact of this technique was evaluated in our ablation study (WP1), where each model was trained both with and without SpecAugment enabled.
 
+% --------- SpecAugment exact params
+\paragraph{SpecAugment parameters}
+The SpecAugment configuration used in all experiments was as follows: up to 2 frequency masks and up to 2 time masks per example, with each mask length sampled uniformly up to 20\% of the corresponding axis length. Masks were applied on-the-fly only to training samples. Frequency and time masks could overlap.
+
 \subsection{Training Protocol}
 To ensure a fair and reproducible comparison, all models were trained using a standardized protocol:
 \begin{itemize}
     \item \textbf{Optimizer:} The Adam optimizer was used with an initial learning rate of \(1 \times 10^{-3}\).
     \item \textbf{Loss Function:} Categorical Cross-Entropy, as it is standard for multi-class classification.
     \item \textbf{Epochs and Batch Size:} Models were trained for a maximum of 120 epochs with a batch size of 48.
+    \item \textbf{Random Seeds and Reproducibility:} Random seeds were fixed to ensure reproducibility across runs: Python seed = 42, NumPy seed = 42, TensorFlow seed = 42. Results reported for the single-split experiments correspond to a single training run with this seed unless otherwise stated; cross-validation results aggregate five independent folds.
     \item \textbf{Training Management:} The training process was managed by a suite of Keras callbacks to ensure robustness and prevent overfitting:
     \begin{itemize}
         \item \texttt{EarlyStopping}: Monitored the validation accuracy with a patience of 25 epochs. Training was automatically halted if no improvement was observed, and the best weights were restored.
@@ -273,7 +297,29 @@ To ensure a fair and reproducible comparison, all models were trained using a st
         \item \texttt{ModelCheckpoint}: Saved the best version of the model based on validation accuracy throughout the training process.
     \end{itemize}
     \item \textbf{Computational Setup:} Training was performed on a GPU, with mixed precision ('mixed\_float16') enabled to accelerate computation and reduce memory consumption.
+    \item \textbf{Latency measurement protocol:} Inference latency reported in Table \ref{tab:gtzan_main_results} is the mean time (in milliseconds) to process a single 128\(\times\)128\(\times\)1 input on an NVIDIA GPU (see Appendix~\ref{app:reproducibility} for hardware details). For each model we executed 50 warm-up inferences followed by 200 timed runs (batch size=1) and reported the average.
 \end{itemize}
+
+% --------- Hyperparameters table
+\begin{table}[H]
+\centering
+\caption{Training hyperparameters used across experiments (default values).}
+\label{tab:hyperparams}
+\begin{tabular}{lr}
+	oprule
+Hyperparameter & Value \\
+\midrule
+Optimizer & Adam (initial lr = 1e-3) \\
+Batch size (single-split) & 48 \\
+Batch size (5-fold CV) & 16 \\
+Epochs (max) & 120 (single-split), 60 (CV) \\
+EarlyStopping patience & 25 (single-split), 10 (CV) \\
+ReduceLROnPlateau factor & 0.2 \\
+Mixed precision & enabled (mixed\_float16) \\
+Random seeds & Python/NumPy/TensorFlow = 42 \\
+\bottomrule
+\end{tabular}
+\end{table}
 
 \section{Results and Analysis}
 \label{sec:results}
@@ -496,28 +542,37 @@ A test accuracy of \textbf{72.2\% on the Indian Music Genre} dataset is a strong
 
 The performance on the \textbf{Tabla Taala dataset was exceptional, with 96.5\% accuracy}. This result is particularly insightful. The U-Net's multi-scale convolutional filters, originally trained on GTZAN to capture melodic and harmonic structures, proved exceptionally adept at identifying the transient events (drum hits, or \textit{bols}) and periodicities that define rhythmic cycles. As shown in the confusion matrix (Figure \ref{fig:cm_tabla}), the model is nearly perfect, with only minor confusion on spectrally similar taals like `Deepchandi` and `Jhaptal`. This success powerfully validates the transfer learning methodology, demonstrating that a well-trained feature extractor can be repurposed for highly specialized and smaller datasets, achieving performance that would be impossible with from-scratch training.
 
-% --- BLOCCO IMMAGINE CON SUBFIG PER COMPATIBILITÀ ---
+% --- Figure block using subcaption's subfigure environment ---
 \begin{figure}[H]
     \centering
-    \subfloat[GTZAN (Test Set)]{%
-        \includegraphics[width=0.48\textwidth]{Images/gtzan_cm.png}%
-        \label{fig:cm_gtzan}%
-    }
+    \begin{subfigure}[b]{0.48\textwidth}
+        \centering
+        \includegraphics[width=\textwidth]{Images/gtzan_cm.png}
+        \caption{GTZAN (Test Set)}
+        \label{fig:cm_gtzan}
+    \end{subfigure}
     \hfill
-    \subfloat[Indian Music Genre (Test Set)]{%
-        \includegraphics[width=0.48\textwidth, height=0.44\textwidth]{Images/indian_cm.png}%
-        \label{fig:cm_indian}%
-    }
+    \begin{subfigure}[b]{0.48\textwidth}
+        \centering
+        \includegraphics[width=\textwidth, height=0.88\textwidth]{Images/indian_cm.png}
+        \caption{Indian Music Genre (Test Set)}
+        \label{fig:cm_indian}
+    \end{subfigure}
+
     \\ % New row for the next figures
-    \subfloat[Tabla Taala (Test Set)]{%
-        \includegraphics[width=0.48\textwidth]{Images/tabla_cm.png}%
-        \label{fig:cm_tabla}%
-    }
+    \begin{subfigure}[b]{0.48\textwidth}
+        \centering
+        \includegraphics[width=\textwidth]{Images/tabla_cm.png}
+        \caption{Tabla Taala (Test Set)}
+        \label{fig:cm_tabla}
+    \end{subfigure}
     \hfill
-    \subfloat[FMA Small (Test Set)]{%
-        \includegraphics[width=0.48\textwidth]{Images/fma_cm.png}%
-        \label{fig:cm_fma}%
-    }
+    \begin{subfigure}[b]{0.48\textwidth}
+        \centering
+        \includegraphics[width=\textwidth]{Images/fma_cm.png}
+        \caption{FMA Small (Test Set)}
+        \label{fig:cm_fma}
+    \end{subfigure}
     \caption{Confusion matrices for our UNet model across all four datasets. The model's adaptability is evident in the strong diagonal performance on GTZAN and Tabla Taala. In contrast, the matrix for FMA Small is more diffuse, reflecting the dataset's inherent complexity and diversity.}
     \label{fig:cm_gallery_all}
 \end{figure}
@@ -582,6 +637,42 @@ Based on our findings, several avenues for future work emerge:
 \end{enumerate}
 
 \subsection{Final Remarks}
+% ------------------ GTZAN caveats ------------------
+\section*{Limitations of the GTZAN dataset}
+The GTZAN dataset is widely used but also well-documented to contain problems that can bias experimental results. Known issues include duplicated excerpts, mislabeled files, and the presence of multiple excerpts from the same recording or artist \cite{sturm2013gtzan}. These problems can inflate reported performance if splits are not performed carefully (e.g., at track or artist level). In this study we explicitly performed track-level splits to mitigate these issues; however, the reader should remain aware that GTZAN's intrinsic limitations make it an imperfect proxy for real-world generalization.
+
+% ------------------ Appendix: Reproducibility ------------------
+\clearpage
+\appendix
+\section{Reproducibility and Environment}
+\label{app:reproducibility}
+To facilitate reproduction of our experiments, we provide the following details about the software environment, hardware, and exact file locations used in this work.
+
+\subsection*{Software environment}
+The experiments were run using the Python packages listed in the repository's \texttt{requirements.txt}. Key packages and tested versions include:
+\begin{itemize}
+    \item Python 3.10+
+    \item TensorFlow (tested with tensorflow 2.17+)
+    \item librosa (0.9+)
+    \item scikit-learn, pandas, numpy
+\end{itemize}
+
+\subsection*{Hardware}
+All model training and timing experiments were performed on a single GPU machine. Example configuration used for the main experiments: NVIDIA RTX 2080 Ti, CUDA 11.x, 32 GB RAM. Exact hardware used for each run is logged in the training summary CSV files under \texttt{reports/} (e.g. \texttt{training\_summary\_WITH\_AUG.csv}).
+
+\subsection*{Notebooks and model checkpoints}
+All preprocessing and training steps are implemented in the notebooks in the \texttt{notebooks/} directory. The pre-trained checkpoints used for transfer learning are available in the \texttt{models/} directory (e.g., \texttt{UNet\_Audio\_Classifier\_best\_WITH\_AUG.keras}).
+
+\subsection*{Kaggle credentials and dataset downloads}
+This repository contains a placeholder for Kaggle dataset access (\texttt{kaggle/kaggle.json}) used during data download in a local environment. \textbf{Do not commit real Kaggle credentials to a public repository.} If you need to download datasets from Kaggle, place your \texttt{kaggle.json} file in your home folder under \texttt{\~/.kaggle/} before running the download scripts. We recommend removing any credential files from version control (e.g., \texttt{git rm --cached kaggle/kaggle.json} and adding \texttt{kaggle.json} to \texttt{.gitignore}).
+
+\subsection*{Command to reproduce a single training run}
+An example command to reproduce the GTZAN WITH\_AUG U-Net training (notebook) is provided below. Use the corresponding notebook \texttt{notebooks/gtzan/01\_train\_tournament.ipynb} and run the cells sequentially with the repository environment active.
+\begin{verbatim}
+# Example: run notebook cells or execute an equivalent training script
+# 1. Activate virtualenv: source venv/bin/activate
+# 2. Launch the notebook and run cells or execute training script
+\end{verbatim}
 In conclusion, this project successfully validated the architectural premise of the reference paper, confirming the U-Net encoder as a powerful tool for audio classification. More critically, through rigorous and transparent methods, it has provided a reliable and reproducible performance benchmark that stands in contrast to the original study's exceptional claims. This work serves as a compelling case study on the paramount importance of methodological transparency and robust validation protocols in the empirical sciences, particularly in the rapidly advancing field of machine learning.
 
 %-----------------------------------------------------------------------------

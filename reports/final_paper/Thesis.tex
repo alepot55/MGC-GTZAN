@@ -637,42 +637,6 @@ Based on our findings, several avenues for future work emerge:
 \end{enumerate}
 
 \subsection{Final Remarks}
-% ------------------ GTZAN caveats ------------------
-\section*{Limitations of the GTZAN dataset}
-The GTZAN dataset is widely used but also well-documented to contain problems that can bias experimental results. Known issues include duplicated excerpts, mislabeled files, and the presence of multiple excerpts from the same recording or artist \cite{sturm2013gtzan}. These problems can inflate reported performance if splits are not performed carefully (e.g., at track or artist level). In this study we explicitly performed track-level splits to mitigate these issues; however, the reader should remain aware that GTZAN's intrinsic limitations make it an imperfect proxy for real-world generalization.
-
-% ------------------ Appendix: Reproducibility ------------------
-\clearpage
-\appendix
-\section{Reproducibility and Environment}
-\label{app:reproducibility}
-To facilitate reproduction of our experiments, we provide the following details about the software environment, hardware, and exact file locations used in this work.
-
-\subsection*{Software environment}
-The experiments were run using the Python packages listed in the repository's \texttt{requirements.txt}. Key packages and tested versions include:
-\begin{itemize}
-    \item Python 3.10+
-    \item TensorFlow (tested with tensorflow 2.17+)
-    \item librosa (0.9+)
-    \item scikit-learn, pandas, numpy
-\end{itemize}
-
-\subsection*{Hardware}
-All model training and timing experiments were performed on a single GPU machine. Example configuration used for the main experiments: NVIDIA RTX 2080 Ti, CUDA 11.x, 32 GB RAM. Exact hardware used for each run is logged in the training summary CSV files under \texttt{reports/} (e.g. \texttt{training\_summary\_WITH\_AUG.csv}).
-
-\subsection*{Notebooks and model checkpoints}
-All preprocessing and training steps are implemented in the notebooks in the \texttt{notebooks/} directory. The pre-trained checkpoints used for transfer learning are available in the \texttt{models/} directory (e.g., \texttt{UNet\_Audio\_Classifier\_best\_WITH\_AUG.keras}).
-
-\subsection*{Kaggle credentials and dataset downloads}
-This repository contains a placeholder for Kaggle dataset access (\texttt{kaggle/kaggle.json}) used during data download in a local environment. \textbf{Do not commit real Kaggle credentials to a public repository.} If you need to download datasets from Kaggle, place your \texttt{kaggle.json} file in your home folder under \texttt{\~/.kaggle/} before running the download scripts. We recommend removing any credential files from version control (e.g., \texttt{git rm --cached kaggle/kaggle.json} and adding \texttt{kaggle.json} to \texttt{.gitignore}).
-
-\subsection*{Command to reproduce a single training run}
-An example command to reproduce the GTZAN WITH\_AUG U-Net training (notebook) is provided below. Use the corresponding notebook \texttt{notebooks/gtzan/01\_train\_tournament.ipynb} and run the cells sequentially with the repository environment active.
-\begin{verbatim}
-# Example: run notebook cells or execute an equivalent training script
-# 1. Activate virtualenv: source venv/bin/activate
-# 2. Launch the notebook and run cells or execute training script
-\end{verbatim}
 In conclusion, this project successfully validated the architectural premise of the reference paper, confirming the U-Net encoder as a powerful tool for audio classification. More critically, through rigorous and transparent methods, it has provided a reliable and reproducible performance benchmark that stands in contrast to the original study's exceptional claims. This work serves as a compelling case study on the paramount importance of methodological transparency and robust validation protocols in the empirical sciences, particularly in the rapidly advancing field of machine learning.
 
 %-----------------------------------------------------------------------------

@@ -101,7 +101,7 @@
 \renewcommand{\abstract}{
 This report presents a comprehensive replication study of the paper "Novel mathematical model for the classification of music and rhythmic genre using deep neural network" by Patil et al. \cite{patil}, which introduced a U-Net-like architecture for Music Genre Classification (MGC) and reported a remarkable 99.41\% accuracy on the GTZAN dataset. Our objective was to rigorously validate this result and establish a reproducible performance benchmark. To this end, we implemented and compared three distinct Convolutional Neural Network (CNN) architectures: a lightweight VGG-style model, a ResNet-based model with Squeeze-and-Excitation blocks, and a U-Net-based classifier analogous to the one proposed in the original work.
 
-A systematic evaluation was conducted on the GTZAN dataset, analyzing model performance, computational efficiency, and the impact of SpecAugment data augmentation. Our results confirm the U-Net architecture's effectiveness, achieving a single-run test accuracy of 82.3\% on a standard 60/20/20 split and, more importantly, a robust 5-fold cross-validation mean accuracy of \textbf{90.4\%}. While this performance is strong, it significantly diverges from the near-perfect accuracy reported in the original paper. This report provides a detailed analysis of our methodology and results, discusses potential factors for the observed performance discrepancy, including data splitting protocols and architectural ambiguities, and ultimately contributes a transparent and reproducible baseline for this task.
+A systematic evaluation was conducted on the GTZAN dataset, analyzing model performance, computational efficiency, and the impact of SpecAugment data augmentation. Our results confirm the U-Net architecture's effectiveness, achieving a single-run test accuracy of 82.3\% on a standard 60/20/20 split and, more importantly, a robust 5-fold cross-validation mean validation accuracy of \textbf{90.4\%}, confirming the model's stability. While this performance is strong, it significantly diverges from the near-perfect accuracy reported in the original paper. This report provides a detailed analysis of our methodology and results, discusses potential factors for the observed performance discrepancy, including data splitting protocols and architectural ambiguities, and ultimately contributes a transparent and reproducible baseline for this task.
 }
 
 % -> key-words (only in English)
@@ -187,7 +187,7 @@ For the Tabla Taala experiments we used a shorter FFT window (n\_fft = 1024) as 
 \begin{figure}[H]
     \centering
     \includegraphics[width=0.8\textwidth]{Images/blues_waveform.png}
-    \caption{Comparison of waveform and Mel-spectrogram representations for a Blues (top) and a Classical (bottom) track from the GTZAN dataset. The distinct visual textures in the spectrograms illustrate the genre-specific patterns that the CNN models are trained to recognize.}
+    \caption{Waveform and Mel-spectrogram representations for a Blues (top) and a Classical (bottom) track. These visualizations highlight the distinct visual patterns, such as the sustained notes and broader harmonic content in Classical versus the percussive transients in Blues, that the CNN architecture is trained to recognize.}
     \label{fig:spectrogram}
 \end{figure}
 
@@ -350,7 +350,7 @@ From an efficiency standpoint (WP2), the U-Net model also presents a compelling 
 \begin{figure}[H]
 \centering
 \includegraphics[width=\textwidth]{Images/efficiency_accuracy.png}
-\caption{Accuracy scaling with model parameters (left) and inference latency (right). The U-Net model (blue) achieves the highest accuracy with better efficiency than the comparable ResNet-based model.}
+\caption{Model Efficiency Analysis on the GTZAN test set. The U-Net architecture (blue) clearly occupies the optimal position in the trade-off space, offering the highest accuracy while maintaining a lower parameter count and inference latency than the comparable ResNet-based model.}
 \label{fig:wp2_efficiency}
 \end{figure}
 
@@ -375,7 +375,7 @@ Efficient\_VGG & 0.7520 & 0.7535 & -0.15 \\
 \begin{figure}[H]
 \centering
 \includegraphics[width=0.8\textwidth]{Images/with_without_aug.png}
-\caption{Change in test accuracy with and without SpecAugment. The U-Net architecture was the only model to benefit from the augmentation.}
+\caption{Study on the impact of SpecAugment. This study reveals that only the high-capacity U-Net model benefits from augmentation (+0.5 p.p.). This suggests that for lower-capacity models like Efficient-VGG and ResSE-AudioCNN, this form of regularization may have acted as noise, slightly hindering performance.}
 \label{fig:wp1_ablation}
 \end{figure}
 
@@ -429,28 +429,28 @@ With the U-Net model established as our champion, we performed a deeper analysis
 
 To move beyond simple accuracy, we generated a detailed classification report for the U-Net model, shown in Table \ref{tab:classification_report}. This provides per-class Precision, Recall, and F1-Score metrics, which are crucial for understanding class-specific performance.
 
-\begin{table}[H]
+\begin{table}[h!]
 \centering
 \caption{Classification report for the U-Net Audio Classifier on the GTZAN test set (WITH\_AUG version). Data extracted from the project's \texttt{final\_analysis.ipynb} notebook.}
-\label{tab:classification_report}
+\label{tab:gtzan_report}
 \begin{tabular}{lrrrr}
 \toprule
 \textbf{Genre} & \textbf{Precision} & \textbf{Recall} & \textbf{F1-Score} & \textbf{Support} \\
 \midrule
-blues & 0.82 & 0.84 & 0.83 & 200 \\
-classical & 0.97 & 1.00 & 0.98 & 200 \\
-country & 0.75 & 0.80 & 0.77 & 200 \\
-disco & 0.78 & 0.79 & 0.79 & 200 \\
-hiphop & 0.79 & 0.74 & 0.76 & 200 \\
-jazz & 0.91 & 0.96 & 0.94 & 200 \\
-metal & 0.90 & 0.94 & 0.92 & 200 \\
-pop & 0.89 & 0.88 & 0.89 & 200 \\
-reggae & 0.85 & 0.70 & 0.77 & 200 \\
-rock & 0.73 & 0.57 & 0.64 & 200 \\
+blues          & 0.87               & 0.84            & 0.85              & 200              \\
+classical      & 0.96               & 1.00            & 0.98              & 200              \\
+country        & 0.75               & 0.80            & 0.78              & 200              \\
+disco          & 0.78               & 0.80            & 0.79              & 200              \\
+hiphop         & 0.77               & 0.74            & 0.76              & 200              \\
+jazz           & 0.89               & 0.96            & 0.93              & 200              \\
+metal          & 0.88               & 0.94            & 0.91              & 200              \\
+pop            & 0.76               & 0.89            & 0.82              & 200              \\
+reggae         & 0.91               & 0.69            & 0.79              & 200              \\
+rock           & 0.66               & 0.57            & 0.61              & 200              \\
 \midrule
 \textbf{Accuracy} & & & \textbf{0.82} & \textbf{2000} \\
-\textbf{Macro Avg} & \textbf{0.84} & \textbf{0.82} & \textbf{0.83} & \textbf{2000} \\
-\textbf{Weighted Avg} & \textbf{0.84} & \textbf{0.82} & \textbf{0.83} & \textbf{2000} \\
+\textbf{Macro Avg} & \textbf{0.82} & \textbf{0.82} & \textbf{0.82} & \textbf{2000} \\
+\textbf{Weighted Avg} & \textbf{0.82} & \textbf{0.82} & \textbf{0.82} & \textbf{2000} \\
 \bottomrule
 \end{tabular}
 \end{table}
@@ -462,7 +462,7 @@ The confusion matrix in Figure \ref{fig:cm_gallery} provides a visual explanatio
 \begin{figure}[H]
     \centering
     \includegraphics[width=0.8\textwidth]{Images/gtzan_cm.png}
-    \caption{Confusion matrix for the U-Net classifier on the GTZAN test set. Most errors, particularly for the 'Rock' class, occur between musically similar genres.}
+    \caption{Confusion Matrix for the champion U-Net model on the GTZAN test set. The strong diagonal confirms high overall performance. Key areas of confusion, such as the misclassification of 'Rock' as 'Country' or 'Disco', highlight the intrinsic difficulty of separating spectrally similar genres based on short audio clips.}
     \label{fig:cm_gallery}
 \end{figure}
 
@@ -534,7 +534,8 @@ Indian Music & 0.722 & 0.72 & 0.72 & 0.72 \\
 \begin{figure}[H]
     \centering
     \includegraphics[width=0.8\textwidth]{Images/dataset_comparison.png}
-    \caption{Performance comparison (Test Accuracy) of our champion U-Net model across all tested datasets. The success of transfer learning on the Indian and Tabla datasets is evident, especially when contrasted with the from-scratch training on FMA.}
+    \caption{Cross-Dataset Generalization Performance of the U-Net model. Its adaptability is demonstrated by the strong performance on the Indian Music Genre (72.2\%) and exceptional results on the rhythmic Tabla Taala (96.5\%) datasets via transfer learning. In contrast, the modest accuracy on the complex FMA Small dataset (41.1\%) underscores the significant challenge of training from scratch on high-entropy, real-world data.
+}
     \label{fig:multi_dataset_summary}
 \end{figure}
 

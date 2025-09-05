@@ -101,7 +101,7 @@
 \renewcommand{\abstract}{
 This report presents a comprehensive replication study of the paper "Novel mathematical model for the classification of music and rhythmic genre using deep neural network" by Patil et al. \cite{patil}, which introduced a U-Net-like architecture for Music Genre Classification (MGC) and reported a remarkable 99.41\% accuracy on the GTZAN dataset. Our objective was to rigorously validate this result and establish a reproducible performance benchmark. To this end, we implemented and compared three distinct Convolutional Neural Network (CNN) architectures: a lightweight VGG-style model, a ResNet-based model with Squeeze-and-Excitation blocks, and a U-Net-based classifier analogous to the one proposed in the original work.
 
-A systematic evaluation was conducted on the GTZAN dataset, analyzing model performance, computational efficiency, and the impact of SpecAugment data augmentation. Our results confirm the U-Net architecture's effectiveness, achieving a single-run test accuracy of 82.3\% on a standard 60/20/20 split and, more importantly, a robust 5-fold cross-validation mean validation accuracy of \textbf{90.4\%}, confirming the model's stability. While this performance is strong, it significantly diverges from the near-perfect accuracy reported in the original paper. This report provides a detailed analysis of our methodology and results, discusses potential factors for the observed performance discrepancy, including data splitting protocols and architectural ambiguities, and ultimately contributes a transparent and reproducible baseline for this task.
+A systematic evaluation was conducted on the GTZAN dataset, analyzing model performance, computational efficiency, and the impact of SpecAugment data augmentation. Our results confirm the U-Net architecture's effectiveness, achieving a single-run test accuracy of 82.3\% on a standard 60/20/20 split and, more importantly, a robust 5-fold cross-validation mean accuracy of \textbf{90.4\%}. While this performance is strong, it significantly diverges from the near-perfect accuracy reported in the original paper. This report provides a detailed analysis of our methodology and results, discusses potential factors for the observed performance discrepancy, including data splitting protocols and architectural ambiguities, and ultimately contributes a transparent and reproducible baseline for this task.
 }
 
 % -> key-words (only in English)
@@ -128,9 +128,9 @@ A systematic evaluation was conducted on the GTZAN dataset, analyzing model perf
 %-----------------------------------------------------------------------------
 \section{Introduction}
 \label{sec:introduction}
-Music Genre Classification (MGC) is a fundamental task in Music Information Retrieval (MIR) that aims to automatically categorize music tracks into predefined genres based on their audio content. This capability is crucial for a wide range of applications, including music recommendation systems, intelligent library organization, and content-based discovery platforms. The paper by Patil et al. \cite{patil} addresses this task by introducing a deep neural network, described as a U-Net-like architecture. The authors claim state-of-the-art performance, notably an accuracy of 99.41\% on the widely-used GTZAN dataset \textbf{\cite{tzanetakis2002gtzan}}. %<-- Citazione del paper originale di GTZAN.
+Music Genre Classification (MGC) is a fundamental task in Music Information Retrieval (MIR) that aims to automatically categorize music tracks into predefined genres based on their audio content. This capability is crucial for a wide range of applications, including music recommendation systems, intelligent library organization, and content-based discovery platforms. The paper by Patil et al. \cite{patil} addresses this task by introducing a deep neural network, described as a U-Net-like architecture. The authors claim state-of-the-art performance, notably an accuracy of 99.41\% on the GTZAN dataset \textbf{\cite{tzanetakis2002gtzan}}. %<-- Citazione del paper originale di GTZAN.
 
-This project undertakes a formal replication and extension of Patil et al.'s work. Our goals were threefold:
+This project undertakes a formal replication and extension of Patil et al.'s work. Our goals were the followings:
 \begin{enumerate}
     \item \textbf{Replicate and Validate:} To implement the core U-Net based architecture and rigorously evaluate its performance on GTZAN, thereby validating the central claim of the paper.
     \item \textbf{Compare and Analyze:} To compare this architecture against two other common CNN designs to understand its relative strengths and weaknesses in terms of both accuracy and computational efficiency.
@@ -187,7 +187,7 @@ For the Tabla Taala experiments we used a shorter FFT window (n\_fft = 1024) as 
 \begin{figure}[H]
     \centering
     \includegraphics[width=0.8\textwidth]{Images/blues_waveform.png}
-    \caption{Waveform and Mel-spectrogram representations for a Blues (top) and a Classical (bottom) track. These visualizations highlight the distinct visual patterns, such as the sustained notes and broader harmonic content in Classical versus the percussive transients in Blues, that the CNN architecture is trained to recognize.}
+    \caption{Comparison of waveform and Mel-spectrogram representations for a Blues (top) and a Classical (bottom) track from the GTZAN dataset. The distinct visual textures in the spectrograms illustrate the genre-specific patterns that the CNN models are trained to recognize.}
     \label{fig:spectrogram}
 \end{figure}
 
@@ -210,7 +210,7 @@ All resulting arrays were saved as NumPy files (\texttt{.npy}) for efficient dat
 To prevent any form of data leakage, all dataset partitioning was performed at the original track level prior to slicing. The 1000 GTZAN audio files were first stratified by genre and split into train/validation/test sets (60/20/20) at the track granularity; only after this split did we slice each track in a given partition into non-overlapping 3-second segments. This guarantees that segments from the same original audio file cannot appear in multiple partitions and prevents the model from exploiting track-level fingerprint information.
 
 \subsection{Label Encoding}
-The textual genre labels (e.g., "Rock", "Blues") were converted into a numerical format suitable for the model's loss function. We used a simple integer encoding scheme, mapping each of the 10 genres to a unique integer from 0 to 9. This mapping was created and saved using the \texttt{pickle} library. Storing the encoder is a crucial step for reproducibility, as it ensures that the label-to-integer mapping remains consistent across all experiments and during inference. For instance, it guarantees that "Rock" is always encoded as the same integer (e.g., 8) every time the code is executed.
+The textual genre labels (e.g., "Rock", "Blues") were converted into a numerical format suitable for the model's loss function. We used a simple integer encoding scheme, mapping each of the 10 genres to a unique integer from 0 to 9. This mapping was created and saved using the \texttt{pickle} library. Storing the encoder is a crucial step for reproducibility, as it ensures that the label-to-integer mapping remains consistent across all experiments and during inference. For instance, it guarantees that "Rock" is always encoded as the same integer every time the code is executed.
 
 \section{Model Architectures and Training Methodology}
 \label{sec:methodology}
@@ -277,7 +277,7 @@ a data augmentation technique applied on-the-fly to the Mel-spectrograms during 
     \item \textbf{Frequency Masking:} A random band of consecutive frequency channels is set to zero. This simulates the loss of specific pitch information, preventing the model from relying excessively on any single frequency range. In our implementation, the maximum size of the mask was set to 20\% of the total frequency bins (i.e., up to 25 of the 128 Mel bands).
     \item \textbf{Time Masking:} A random block of consecutive time steps is masked. This makes the model more robust to temporal occlusions or variations in the audio. The maximum mask size was similarly set to 20\% of the total time steps.
 \end{itemize}
-The direct impact of this technique was evaluated in our ablation study (WP1), where each model was trained both with and without SpecAugment enabled.
+The direct impact of this technique was evaluated in our ablation study, where each model was trained both with and without SpecAugment enabled.
 
 % --------- SpecAugment exact params
 \paragraph{SpecAugment parameters}
@@ -297,7 +297,7 @@ To ensure a fair and reproducible comparison, all models were trained using a st
         \item \texttt{ModelCheckpoint}: Saved the best version of the model based on validation accuracy throughout the training process.
     \end{itemize}
     \item \textbf{Computational Setup:} Training was performed on a GPU, with mixed precision ('mixed\_float16') enabled to accelerate computation and reduce memory consumption.
-    \item \textbf{Latency measurement protocol:} Inference latency reported in Table \ref{tab:gtzan_main_results} is the mean time (in milliseconds) to process a single 128\(\times\)128\(\times\)1 input on an NVIDIA GPU (see Appendix~\ref{app:reproducibility} for hardware details). For each model we executed 50 warm-up inferences followed by 200 timed runs (batch size=1) and reported the average.
+    \item \textbf{Latency measurement protocol:} Inference latency reported in Table \ref{tab:gtzan_main_results} is the mean time (in milliseconds) to process a single 128\(\times\)128\(\times\)1 input on an NVIDIA GPU. For each model we executed 50 warm-up inferences followed by 200 timed runs (batch size=1) and reported the average.
 \end{itemize}
 
 % --------- Hyperparameters table
@@ -306,7 +306,7 @@ To ensure a fair and reproducible comparison, all models were trained using a st
 \caption{Training hyperparameters used across experiments (default values).}
 \label{tab:hyperparams}
 \begin{tabular}{lr}
-	oprule
+	\toprule
 Hyperparameter & Value \\
 \midrule
 Optimizer & Adam (initial lr = 1e-3) \\
@@ -345,17 +345,17 @@ Efficient\_VGG & 0.752 & 0.03 M & 14.77 \\
 
 The \textbf{U-Net Audio Classifier} emerged as the clear top-performing model, achieving a test accuracy of 82.3\%. This result validates the effectiveness of its multi-scale feature extraction strategy, which captures hierarchical patterns from the spectrograms. The ResSE-AudioCNN also performed well with 79.8\% accuracy, but the U-Net architecture held a distinct advantage. As expected, the lightweight Efficient-VGG model served as a solid baseline, achieving a respectable 75.2\% accuracy.
 
-From an efficiency standpoint (WP2), the U-Net model also presents a compelling case. As illustrated in Figure \ref{fig:wp2_efficiency}, while the Efficient-VGG model is significantly faster and smaller, its accuracy is considerably lower. Among the high-performance models, the U-Net classifier is not only more accurate than the ResSE-AudioCNN but also slightly more efficient, containing fewer parameters (1.18M vs 1.23M) and exhibiting lower inference latency (23.07 ms vs 26.75 ms). This indicates an excellent trade-off between predictive power and computational cost.
+From an efficiency standpoint, the U-Net model also presents a compelling case. As illustrated in Figure \ref{fig:wp2_efficiency}, while the Efficient-VGG model is significantly faster and smaller, its accuracy is considerably lower. Among the high-performance models, the U-Net classifier is not only more accurate than the ResSE-AudioCNN but also slightly more efficient, containing fewer parameters (1.18M vs 1.23M) and exhibiting lower inference latency (23.07 ms vs 26.75 ms). This indicates an excellent trade-off between predictive power and computational cost.
 
 \begin{figure}[H]
 \centering
 \includegraphics[width=\textwidth]{Images/efficiency_accuracy.png}
-\caption{Model Efficiency Analysis on the GTZAN test set. The U-Net architecture (blue) clearly occupies the optimal position in the trade-off space, offering the highest accuracy while maintaining a lower parameter count and inference latency than the comparable ResNet-based model.}
+\caption{Accuracy scaling with model parameters (left) and inference latency (right). The U-Net model (blue) achieves the highest accuracy with better efficiency than the comparable ResNet-based model.}
 \label{fig:wp2_efficiency}
 \end{figure}
 
 \subsection{Ablation Study: The Impact of SpecAugment}
-To isolate the effect of data augmentation (WP1), we conducted an ablation study by training each model with and without SpecAugment. The results, summarized in Table \ref{tab:ablation} and visualized in Figure \ref{fig:wp1_ablation}, were revealing.
+To isolate the effect of data augmentation, we conducted an ablation study by training each model with and without SpecAugment. The results, summarized in Table \ref{tab:ablation} and visualized in Figure \ref{fig:wp1_ablation}, were revealing.
 
 \begin{table}[H]
 \centering
@@ -375,14 +375,14 @@ Efficient\_VGG & 0.7520 & 0.7535 & -0.15 \\
 \begin{figure}[H]
 \centering
 \includegraphics[width=0.8\textwidth]{Images/with_without_aug.png}
-\caption{Study on the impact of SpecAugment. This study reveals that only the high-capacity U-Net model benefits from augmentation (+0.5 p.p.). This suggests that for lower-capacity models like Efficient-VGG and ResSE-AudioCNN, this form of regularization may have acted as noise, slightly hindering performance.}
+\caption{Change in test accuracy with and without SpecAugment. The U-Net architecture was the only model to benefit from the augmentation.}
 \label{fig:wp1_ablation}
 \end{figure}
 
-Only the U-Net model demonstrated a clear, albeit modest, performance improvement (+0.5 p.p.) from SpecAugment. Conversely, the two simpler models exhibited a slight degradation in accuracy. This suggests that the model's capacity plays a crucial role in its ability to leverage this form of regularization. The U-Net, with its larger number of parameters and hierarchical structure, was likely able to interpret the artificial occlusions as a signal to learn more robust and generalizable features. In contrast, the lower-capacity models may have treated the augmentation simply as noise, which slightly hindered their learning process.
+Only the U-Net model demonstrated a clear, even if modest, performance improvement (+0.5 p.p.) from SpecAugment. Conversely, the two simpler models exhibited a slight degradation in accuracy. This suggests that the model's capacity plays a crucial role in its ability to leverage this form of regularization. The U-Net, with its larger number of parameters and hierarchical structure, was likely able to interpret the artificial occlusions as a signal to learn more robust and generalizable features. In contrast, the lower-capacity models may have treated the augmentation simply as noise, which slightly hindered their learning process.
 
 \subsection{Robustness Verification: 5-Fold Cross-Validation}
-A single train-validation-test split can be subject to sampling bias. To obtain a more reliable estimate of the champion model's performance and assess its stability, we conducted a 5-fold cross-validation experiment (WP4) on the U-Net classifier.
+A single train-validation-test split can be subject to sampling bias. To obtain a more reliable estimate of the champion model's performance and assess its stability, we conducted a 5-fold cross-validation experiment on the U-Net classifier.
 
 \begin{table}[H]
 \centering
@@ -417,7 +417,7 @@ Standard Deviation & 0.68\% \\
 
 As shown in Table \ref{tab:kfold_summary}, the model achieved a mean validation accuracy of \textbf{90.44\%}, a result substantially higher than the 82.3\% accuracy from our initial single split. This indicates that the initial partition was likely a particularly challenging one. Furthermore, the extremely low standard deviation of 0.68\% across the folds (detailed in Table \ref{tab:kfold_folds}) demonstrates the model's high stability and robustness to variations in the training data. This cross-validated accuracy represents our most confident performance estimate for the U-Net architecture on the GTZAN dataset.
 
-\subsection{Analysis of the Champion Model's Performance}
+\subsection{Analysis of the Winner Model's Performance}
 With the U-Net model established as our champion, we performed a deeper analysis of its predictive behavior on the GTZAN test set. The final performance ranking is confirmed in Figure \ref{fig:leaderboard}.
 
 \begin{figure}[H]
@@ -429,24 +429,24 @@ With the U-Net model established as our champion, we performed a deeper analysis
 
 To move beyond simple accuracy, we generated a detailed classification report for the U-Net model, shown in Table \ref{tab:classification_report}. This provides per-class Precision, Recall, and F1-Score metrics, which are crucial for understanding class-specific performance.
 
-\begin{table}[h!]
+\begin{table}[H]
 \centering
 \caption{Classification report for the U-Net Audio Classifier on the GTZAN test set (WITH\_AUG version). Data extracted from the project's \texttt{final\_analysis.ipynb} notebook.}
-\label{tab:gtzan_report}
+\label{tab:classification_report}
 \begin{tabular}{lrrrr}
 \toprule
 \textbf{Genre} & \textbf{Precision} & \textbf{Recall} & \textbf{F1-Score} & \textbf{Support} \\
 \midrule
-blues          & 0.87               & 0.84            & 0.85              & 200              \\
-classical      & 0.96               & 1.00            & 0.98              & 200              \\
-country        & 0.75               & 0.80            & 0.78              & 200              \\
-disco          & 0.78               & 0.80            & 0.79              & 200              \\
-hiphop         & 0.77               & 0.74            & 0.76              & 200              \\
-jazz           & 0.89               & 0.96            & 0.93              & 200              \\
-metal          & 0.88               & 0.94            & 0.91              & 200              \\
-pop            & 0.76               & 0.89            & 0.82              & 200              \\
-reggae         & 0.91               & 0.69            & 0.79              & 200              \\
-rock           & 0.66               & 0.57            & 0.61              & 200              \\
+blues & 0.87 & 0.84 & 0.85 & 200 \\
+classical & 0.96 & 1.00 & 0.98 & 200 \\
+country & 0.75 & 0.80 & 0.78 & 200 \\
+disco & 0.78 & 0.80 & 0.79 & 200 \\
+hiphop & 0.77 & 0.74 & 0.76 & 200 \\
+jazz & 0.89 & 0.96 & 0.93 & 200 \\
+metal & 0.88 & 0.94 & 0.91 & 200 \\
+pop & 0.76 & 0.89 & 0.82 & 200 \\
+reggae & 0.91 & 0.69 & 0.79 & 200 \\
+rock & 0.66 & 0.57 & 0.61 & 200 \\
 \midrule
 \textbf{Accuracy} & & & \textbf{0.82} & \textbf{2000} \\
 \textbf{Macro Avg} & \textbf{0.82} & \textbf{0.82} & \textbf{0.82} & \textbf{2000} \\
@@ -455,14 +455,14 @@ rock           & 0.66               & 0.57            & 0.61              & 200 
 \end{tabular}
 \end{table}
 
-The report highlights a strong overall performance with a macro average F1-Score of 0.83. The model excels on genres with distinct acoustic signatures like 'classical' (F1-Score: 0.98) and 'jazz' (F1-Score: 0.94). Its primary weakness lies with the 'rock' genre, which has a notably low F1-Score of 0.64, primarily driven by a low recall of 0.57.
+The report highlights a strong overall performance with a macro average F1-Score of 0.82. The model excels on genres with distinct acoustic signatures like 'classical' (F1-Score: 0.98) and 'jazz' (F1-Score: 0.93). Its primary weakness lies with the 'rock' genre, which has a notably low F1-Score of 0.61, primarily driven by a low recall of 0.57.
 
 The confusion matrix in Figure \ref{fig:cm_gallery} provides a visual explanation for these metrics. The strong diagonal indicates high accuracy for most classes. The low recall for 'rock' is explained by its confusion with spectrally similar genres: 30 instances were misclassified as 'country' and 17 as 'disco'. Similarly, 'reggae' has a low recall (0.70) because it is often confused with 'hiphop' (22 instances) and 'disco' (16 instances). These misclassifications are musically coherent and point to the intrinsic difficulty of separating these genres based on 3-second audio clips.
 
 \begin{figure}[H]
     \centering
     \includegraphics[width=0.8\textwidth]{Images/gtzan_cm.png}
-    \caption{Confusion Matrix for the champion U-Net model on the GTZAN test set. The strong diagonal confirms high overall performance. Key areas of confusion, such as the misclassification of 'Rock' as 'Country' or 'Disco', highlight the intrinsic difficulty of separating spectrally similar genres based on short audio clips.}
+    \caption{Confusion matrix for the U-Net classifier on the GTZAN test set. Most errors, particularly for the 'Rock' class, occur between musically similar genres.}
     \label{fig:cm_gallery}
 \end{figure}
 
@@ -484,7 +484,7 @@ represents a significant step up in difficulty from GTZAN. It comprises 8,000 hi
 For this experiment, we utilized the official 60/20/20 train/validation/test split.
 
 \paragraph{Methodology}
-Our methodology for this experiment, as documented in the notebook \texttt{01\_train.ipynb}, involved training our \texttt{UNet\_Audio\_Classifier} from scratch. Given the substantial size of the FMA dataset, this approach serves as a direct stress test of the architecture's ability to learn from a complex data distribution without the aid of pre-trained weights. The training configuration was adapted slightly for this task: SpecAugment was retained for regularization, but the label smoothing factor was increased to `0.05` to counteract the higher potential for overfitting on this noisy dataset. The model was trained for up to 80 epochs with a patience of 15 on validation accuracy.
+Our methodology for this experiment, as documented in the notebook \texttt{fma\textbackslash01\_train.ipynb}, involved training our \texttt{UNet\_Audio\_Classifier} from scratch. Given the substantial size of the FMA dataset, this approach serves as a direct stress test of the architecture's ability to learn from a complex data distribution without the aid of pre-trained weights. The training configuration was adapted slightly for this task: SpecAugment was retained for regularization, but the label smoothing factor was increased to `0.05` to counteract the higher potential for overfitting on this noisy dataset. The model was trained for up to 80 epochs with a patience of 15 on validation accuracy.
 
 \paragraph{Results and Analysis}
 The model achieved a final test accuracy of \textbf{41.1\%}. While modest in absolute terms, this performance significantly surpasses the 12.5\% random baseline for an 8-class problem, confirming that the model learned meaningful patterns despite the dataset's complexity. Table \ref{tab:cross_dataset_summary} provides a detailed performance breakdown.
@@ -494,7 +494,7 @@ The confusion matrix in Figure \ref{fig:cm_fma} visually illustrates the nature 
 \subsection{Indian Music Genre \& Tabla Taala: A Test of Domain Adaptation}
 
 For the Indian and Tabla datasets, we adopted a more sophisticated strategy: \textbf{transfer learning} \textbf{\cite{choi2017transfer}}. %<-- Citazione che supporta il concetto di transfer learning in ambito musicale.
-These datasets are considerably smaller than GTZAN, making them highly susceptible to overfitting if a deep model like our U-Net were trained from scratch. Our hypothesis was that the low-level and mid-level features learned by the U-Net on thousands of Western music tracks—such as onsets, timbral textures, and basic harmonic patterns—could provide a powerful feature extractor for these new, musically related tasks.
+These datasets are considerably smaller than GTZAN, making them highly susceptible to overfitting if a deep model like our U-Net were trained from scratch. Our hypothesis was that the low-level and mid-level features learned by the U-Net on thousands of Western music tracks,such as onsets, timbral textures, and basic harmonic patterns,could provide a powerful feature extractor for these new, musically related tasks.
 
 \paragraph{The Datasets}
 \begin{itemize}
@@ -505,7 +505,7 @@ These datasets are considerably smaller than GTZAN, making them highly susceptib
 \end{itemize}
 
 \paragraph{Methodology: Transfer Learning from GTZAN}
-As implemented in the notebooks \texttt{01\_train (1).ipynb} for the Indian dataset and \texttt{01\_train (2).ipynb} for the Tabla dataset, our transfer learning protocol was precisely tailored:
+As implemented in the notebooks \texttt{indian\textbackslash01\_train.ipynb} for the Indian dataset and \texttt{tabla\textbackslash01\_train.ipynb} for the Tabla dataset, our transfer learning protocol was precisely tailored:
 \begin{enumerate}
     \item We instantiated our champion \texttt{UNet\_Audio\_Classifier} architecture.
     \item The convolutional backbone was initialized by loading the weights from the U-Net model pre-trained on GTZAN (\texttt{WITH\_AUG} version). This step provides a robust set of initial features optimized for audio spectrograms.
@@ -524,8 +524,8 @@ The transfer learning strategy proved highly effective, yielding strong results 
 \toprule
 \textbf{Dataset} & \textbf{Accuracy} & \textbf{Precision (Macro)} & \textbf{Recall (Macro)} & \textbf{F1-Score (Macro)} \\
 \midrule
-FMA Small & 0.411 & 0.41 & 0.40 & 0.40 \\
-Indian Music & 0.722 & 0.72 & 0.72 & 0.72 \\
+FMA Small & 0.411 & 0.40 & 0.41 & 0.40 \\
+Indian Music & 0.722 & 0.73 & 0.72 & 0.72 \\
 \textbf{Tabla Taala} & \textbf{0.965} & \textbf{0.97} & \textbf{0.96} & \textbf{0.96} \\
 \bottomrule
 \end{tabular}
@@ -534,8 +534,7 @@ Indian Music & 0.722 & 0.72 & 0.72 & 0.72 \\
 \begin{figure}[H]
     \centering
     \includegraphics[width=0.8\textwidth]{Images/dataset_comparison.png}
-    \caption{Cross-Dataset Generalization Performance of the U-Net model. Its adaptability is demonstrated by the strong performance on the Indian Music Genre (72.2\%) and exceptional results on the rhythmic Tabla Taala (96.5\%) datasets via transfer learning. In contrast, the modest accuracy on the complex FMA Small dataset (41.1\%) underscores the significant challenge of training from scratch on high-entropy, real-world data.
-}
+    \caption{Performance comparison (Test Accuracy) of our champion U-Net model across all tested datasets. The success of transfer learning on the Indian and Tabla datasets is evident, especially when contrasted with the from-scratch training on FMA.}
     \label{fig:multi_dataset_summary}
 \end{figure}
 
@@ -555,22 +554,22 @@ The performance on the \textbf{Tabla Taala dataset was exceptional, with 96.5\% 
     \hfill
     \begin{subfigure}[b]{0.48\textwidth}
         \centering
-        \includegraphics[width=\textwidth, height=0.88\textwidth]{Images/indian_cm.png}
+        \includegraphics[width=\textwidth, height=0.92\textwidth]{Images/indian_cm.png}
         \caption{Indian Music Genre (Test Set)}
         \label{fig:cm_indian}
     \end{subfigure}
 
-    \\ % New row for the next figures
+     % New row for the next figures
     \begin{subfigure}[b]{0.48\textwidth}
         \centering
-        \includegraphics[width=\textwidth]{Images/tabla_cm.png}
+        \includegraphics[width=\textwidth, height=0.92\textwidth]{Images/tabla_cm.png}
         \caption{Tabla Taala (Test Set)}
         \label{fig:cm_tabla}
     \end{subfigure}
     \hfill
     \begin{subfigure}[b]{0.48\textwidth}
         \centering
-        \includegraphics[width=\textwidth]{Images/fma_cm.png}
+        \includegraphics[width=\textwidth, height=0.92\textwidth]{Images/fma_cm.png}
         \caption{FMA Small (Test Set)}
         \label{fig:cm_fma}
     \end{subfigure}
@@ -596,20 +595,20 @@ Even our most optimistic, cross-validated result presents a performance delta of
 While definitive conclusions are impossible without access to the original source code and data partitions, we posit three potential explanations for this variance, ranked in order of perceived likelihood.
 
 \begin{enumerate}
-    \item \textbf{Data Splitting and Information Leakage (Leading Hypothesis):} Our leading hypothesis centers on the critical issue of data partitioning and the potential for information leakage. The reference study does not specify its data partitioning strategy. A common and severe pitfall in audio classification involves splitting a single 30-second audio track into multiple 3-second segments and then distributing these segments randomly across training, validation, and test sets. This creates an information leak, as the model learns to recognize the unique acoustic fingerprint of a specific track (e.g., the artist's timbre, recording environment, or mastering profile) rather than the generalizable features of a genre \textbf{\cite{salamon2017data_leakage}}. %<-- Citazione chiave che spiega e supporta l'ipotesi di data leakage.
+    \item \textbf{Data Splitting and Information Leakage (Leading Hypothesis):} Our leading hypothesis centers on the critical issue of data partitioning and the potential for information leakage. The reference study does not specify its data partitioning strategy. A common and severe pitfall in audio classification involves splitting a single 30-second audio track into multiple 3-second segments and then distributing these segments randomly across training, validation, and test sets. This creates an information leak, as the model learns to recognize the unique acoustic fingerprint of a specific track (e.g., the artist's timbre, recording environment, or mastering profile) rather than the generalizable features of a genre.
     This effectively transforms the task from genre classification to audio fingerprinting, leading to artificially inflated and misleadingly high performance metrics.
 
     Our implementation, in contrast, strictly adheres to a track-level split, a more rigorous methodology that ensures no temporal overlap between the sets. Our 5-fold cross-validation protocol further strengthens this approach, providing a more conservative and realistic measure of the model's true generalization capability.
 
-    \item \textbf{Methodological Ambiguity of the "Novel Mathematical Model":} The paper attributes its success to a "novel mathematical model" and "fine-grained features forwarding," but describes these components in abstract terms, lacking the specific architectural and algorithmic details required for faithful replication. Reproducibility is a cornerstone of scientific inquiry, and this ambiguity hinders independent verification. Our adaptation of the U-Net architecture for classification—replacing the decoder path with a global pooling layer and a dense classifier—represents a standard and principled method documented in machine learning literature for converting segmentation models to classification tasks \textbf{\cite{ronneberger2015unet}}. %<-- Ri-citare U-Net qui ha senso per contestualizzare la tua implementazione.
+    \item \textbf{Methodological Ambiguity of the "Novel Mathematical Model":} The paper attributes its success to a "novel mathematical model" and "fine-grained features forwarding," but describes these components in abstract terms, lacking the specific architectural and algorithmic details required for faithful replication. Reproducibility is a cornerstone of scientific inquiry, and this ambiguity hinders independent verification. Our adaptation of the U-Net architecture for classification,replacing the decoder path with a global pooling layer and a dense classifier,represents a standard and principled method documented in machine learning literature for converting segmentation models to classification tasks \textbf{\cite{ronneberger2015unet}}. %<-- Ri-citare U-Net qui ha senso per contestualizzare la tua implementazione.
     Without reproducible specifics, it is impossible to ascertain the precise contribution, if any, of their proposed modifications over a standard implementation.
 
-    \item \textbf{Contextualizing the State-of-the-Art on GTZAN:} Finally, the reported accuracy of 99.41\% warrants contextualization within the broader academic literature. The GTZAN dataset, while a foundational benchmark, is known to contain labeling inconsistencies and significant spectral ambiguity between genres such as Rock, Country, and Blues. Consequently, state-of-the-art models published in peer-reviewed venues typically achieve accuracies in the 90-95\% range \textbf{\cite{salamon2017data_leakage}}. %<-- Questa fonte è utile anche qui perché discute le problematiche di GTZAN.
+    \item \textbf{Contextualizing the State-of-the-Art on GTZAN:} Finally, the reported accuracy of 99.41\% warrants contextualization within the broader academic literature. The GTZAN dataset, while a foundational benchmark, is known to contain labeling inconsistencies and significant spectral ambiguity between genres such as Rock, Country, and Blues. Consequently, state-of-the-art models published in peer-reviewed venues typically achieve accuracies in the 90-95\% range.
     A near-perfect score is a significant outlier that deviates from established community results. This suggests that the evaluation conditions in the original study may have been exceptionally favorable, potentially due to the data leakage issues discussed previously.
 \end{enumerate}
 
 \subsection{Corroboration of Model Efficiency}
-Despite the discrepancy in top-line accuracy, our efficiency analysis (WP2) independently validates the paper's general assertion regarding the architecture's effectiveness. Our experiments confirm that the U-Net based classifier provides a superior balance of performance and computational cost compared to a standard ResNet-based architecture. Specifically, our \texttt{UNet\_Audio\_Classifier} proved both more accurate and computationally more efficient (1.18M parameters; 23.07 ms latency) than the comparable ResSE-AudioCNN model (1.23M parameters; 26.75 ms latency). This finding validates the central premise that the U-Net's multi-scale encoder design is a highly effective choice for spectrogram-based classification tasks.
+Despite the discrepancy in top-line accuracy, our efficiency analysis independently validates the paper's general assertion regarding the architecture's effectiveness. Our experiments confirm that the U-Net based classifier provides a superior balance of performance and computational cost compared to a standard ResNet-based architecture. Specifically, our \texttt{UNet\_Audio\_Classifier} proved both more accurate and computationally more efficient (1.18M parameters; 23.07 ms latency) than the comparable ResSE-AudioCNN model (1.23M parameters; 26.75 ms latency). This finding validates the central premise that the U-Net's multi-scale encoder design is a highly effective choice for spectrogram-based classification tasks.
 
 
 \section{Conclusion and Future Work}
@@ -620,8 +619,8 @@ This project embarked on a rigorous replication and extension of the study by Pa
 \subsection{Summary of Key Findings}
 Our primary finding corroborates the central thesis of the reference paper: a U-Net based convolutional encoder is indeed a highly effective architecture for music genre classification. Our champion model, the \texttt{UNet\_Audio\_Classifier}, achieved a mean validation accuracy of \textbf{90.44\%} under a robust 5-fold cross-validation scheme on the GTZAN dataset \textbf{\cite{tzanetakis2002gtzan}}. This result is competitive with state-of-the-art benchmarks and confirms the architecture's capacity to learn discriminative, hierarchical features from audio spectrograms.
 
-However, our second key finding is a significant and irreconcilable discrepancy between our results and the 99.41\% accuracy reported by Patil et al. This leads us to hypothesize that the performance gap is not attributable to a flaw in our replication, but rather to potential methodological issues in the original study, most likely related to data partitioning and information leakage \textbf{\cite{salamon2017data_leakage}}. %<-- Citazione finale che rafforza l'ipotesi principale.
-Consequently, a principal contribution of our work is the establishment of a transparent and—most importantly—reproducible performance benchmark for this architecture.
+However, our second key finding is a significant and irreconcilable discrepancy between our results and the 99.41\% accuracy reported by Patil et al. This leads us to hypothesize that the performance gap is not attributable to a flaw in our replication, but rather to potential methodological issues in the original study, most likely related to data partitioning and information leakage.
+Consequently, a principal contribution of our work is the establishment of a transparent and,most importantly,reproducible performance benchmark for this architecture.
 
 Furthermore, our extension experiments demonstrated the architecture's adaptability and limitations. The exceptional performance on the Tabla Taala dataset (96.5\% accuracy), achieved via transfer learning \textbf{\cite{choi2017transfer}}, %<-- Citazione per il transfer learning.
 provides strong evidence that features learned from broad music corpora can be effectively fine-tuned for highly specialized, domain-specific tasks like rhythmic pattern recognition. Conversely, the modest performance on the complex FMA Small dataset (41.1\% accuracy) \textbf{\cite{defferrard2017fma}} %<-- Citazione FMA.

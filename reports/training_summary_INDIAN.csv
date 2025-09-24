@@ -1,2 +1,0 @@
-Model,Dataset,Best_Val_Accuracy,Test_Accuracy,Epochs_Run
-UNet_Audio_Classifier,INDIAN,0.7620000243186951,0.722,61

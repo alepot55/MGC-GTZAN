@@ -16,8 +16,6 @@ Minimal, reproducible pipeline for benchmarking CNN architectures on GTZAN and t
 notebooks/gtzan (prep, train, cv)
 notebooks/{fma,indian,tabla}
 notebooks/final_analysis.ipynb
-models/            # Saved .keras
-reports/           # *.csv, classification reports
 setup.sh           # Download + prepare GTZAN
 requirements.txt
 ```

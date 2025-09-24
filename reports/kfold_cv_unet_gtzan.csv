@@ -1,2 +1,0 @@
-Model,Dataset,K,ValAcc_Mean,ValAcc_Std
-UNet_Audio_Classifier,GTZAN,5,0.9043750047683716,0.006835106673852528

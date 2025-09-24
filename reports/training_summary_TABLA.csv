@@ -1,2 +1,0 @@
-Model,Dataset,Best_Val_Accuracy,Test_Accuracy,Epochs_Run
-UNet_Audio_Classifier,TABLA,1.0,0.9649122807017544,32

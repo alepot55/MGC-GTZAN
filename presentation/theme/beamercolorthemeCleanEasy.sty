@@ -8,30 +8,130 @@
 %-------------------------------------------------------------
 
 %--------------------------------------
-%  Color Settings
+%  Color Settings (modern + legacy compatibility)
 %--------------------------------------
 
-% define custom colors
-\definecolor{MutedRed}{rgb}{0.97, 0.92, 0.92}
-\definecolor{MutedGreen}{rgb}{0.92, 0.97, 0.92}
-\definecolor{MutedBlue}{rgb}{0.92, 0.92, 0.97}
-\definecolor{MutedBlack}{rgb}{0.95, 0.95, 0.95}
+% If accent not defined earlier (should be in main theme), define fallback
+\providecolor{CEAccent}{rgb}{0.05,0.45,0.75}
+\providecolor{CEAccentLight}{rgb}{0.85,0.93,0.98}
+\providecolor{CEAccentDark}{rgb}{0.02,0.25,0.45}
 
-\definecolor{MediumRed}{rgb}{0.925, 0.345, 0.345}
-\definecolor{MediumGreen}{rgb}{0.37, 0.7, 0.66}
-\definecolor{MediumBlue}{rgb}{0.015, 0.315, 0.45}
-\definecolor{MediumBlack}{rgb}{0.219, 0.259, 0.349}
+% Neutral scale (light mode)
+\definecolor{CEBgLight}{rgb}{0.995,0.995,0.995}
+\definecolor{CEBgSurface}{rgb}{0.97,0.975,0.98}
+\definecolor{CEBgAlt}{rgb}{0.94,0.95,0.96}
+\definecolor{CEBorder}{rgb}{0.80,0.83,0.87}
+\definecolor{CEText}{rgb}{0.12,0.15,0.22}
+\definecolor{CETextMuted}{rgb}{0.35,0.40,0.48}
 
-\definecolor{DarkBlue}{rgb}{0.05, 0.15, 0.35}
+% Neutral scale (dark mode)
+\definecolor{CEBgDark}{rgb}{0.10,0.12,0.14}
+\definecolor{CEBgSurfaceDark}{rgb}{0.14,0.16,0.18}
+\definecolor{CEBgAltDark}{rgb}{0.18,0.20,0.23}
+\definecolor{CEBorderDark}{rgb}{0.30,0.34,0.39}
+\definecolor{CETextDark}{rgb}{0.90,0.92,0.95}
+\definecolor{CETextMutedDark}{rgb}{0.60,0.66,0.72}
 
-% set beamer color themes
-\usecolortheme[named=DarkBlue]{structure}
+% Semantic colors (optional examples)
+\definecolor{CEPositive}{rgb}{0.20,0.60,0.45}
+\definecolor{CEWarning}{rgb}{0.85,0.55,0.15}
+\definecolor{CENegative}{rgb}{0.76,0.22,0.25}
 
-% customize colors for elements
-\setbeamercolor{titlelike}{parent=structure}
-\setbeamercolor{block title}{fg=white,bg=MediumBlue}
-\setbeamercolor{block body}{fg=black,bg=MutedBlue}
-\setbeamercolor{block title example}{fg=white,bg=MediumGreen}
-\setbeamercolor{block body example}{fg=black,bg=MutedGreen}
-\setbeamercolor{block title alerted}{fg=white,bg=MediumRed}
-\setbeamercolor{block body alerted}{fg=black,bg=MutedRed}
+% Determine mode from macro set in main theme (default light)
+\providecommand{\CleanEasy@colormode}{light}
+
+\ifx\CleanEasy@colormode\@undefined\def\CleanEasy@colormode{light}\fi
+
+% Base assignments depending on mode
+\ifx\CleanEasy@colormode\@empty\def\CleanEasy@colormode{light}\fi
+
+\newcommand{\ce@applycolors}{%
+	\ifx\CleanEasy@colormode\@undefined\def\CleanEasy@colormode{light}\fi
+	\ifx\CleanEasy@colormode\relax\def\CleanEasy@colormode{light}\fi
+	\def\ce@bg{CEBgLight}%
+	\def\ce@surface{CEBgSurface}%
+	\def\ce@alt{CEBgAlt}%
+	\def\ce@border{CEBorder}%
+	\def\ce@text{CEText}%
+	\def\ce@textmuted{CETextMuted}%
+	\def\ce@accentfg{CEAccent}%
+	\def\ce@accentbg{CEAccentLight}%
+	\ifx\CleanEasy@colormode\dark
+		% dark mode override
+	\fi
+	\ifx\CleanEasy@colormode\dark
+		\def\ce@bg{CEBgDark}%
+		\def\ce@surface{CEBgSurfaceDark}%
+		\def\ce@alt{CEBgAltDark}%
+		\def\ce@border{CEBorderDark}%
+		\def\ce@text{CETextDark}%
+		\def\ce@textmuted{CETextMutedDark}%
+		\def\ce@accentfg{CEAccentLight}%
+		\def\ce@accentbg{CEAccentDark}%
+	\fi
+}
+
+\ce@applycolors
+
+% Structure color = accent
+\setbeamercolor{structure}{fg=\ce@accentfg}
+
+% Academic overrides: palette neutra e blocchi senza accento forte
+\ifdefined\CleanEasy@academic
+	% Colori più sobri
+	\setbeamercolor{structure}{fg=\ce@text}
+	\setbeamercolor{frametitle}{fg=\ce@text,bg=\ce@bg}
+	\setbeamercolor{title}{fg=\ce@text,bg=\ce@bg}
+	\setbeamercolor{subtitle}{fg=\ce@textmuted,bg=\ce@bg}
+	% Blocchi: titolo grigio scuro su fondo leggermente diverso
+	\setbeamercolor{block title}{fg=\ce@text,bg=\ce@alt}
+	\setbeamercolor{block body}{fg=\ce@text,bg=\ce@bg}
+	\setbeamercolor{block title alerted}{fg=white,bg=CENegative}
+	\setbeamercolor{block body alerted}{fg=\ce@text,bg=\ce@bg}
+	\setbeamercolor{block title example}{fg=white,bg=CEPositive}
+	\setbeamercolor{block body example}{fg=\ce@text,bg=\ce@bg}
+	% Footline neutro
+	\setbeamercolor{title in head/foot}{fg=\ce@textmuted,bg=\ce@bg}
+	\setbeamercolor{author in head/foot}{fg=\ce@textmuted,bg=\ce@bg}
+	\setbeamercolor{date in head/foot}{fg=\ce@textmuted,bg=\ce@bg}
+	% Progress bar disabilitata (colore identico background)
+	\setbeamercolor{progress bar}{fg=\ce@bg,bg=\ce@bg}
+\fi
+
+% Text and backgrounds
+\setbeamercolor{normal text}{fg=\ce@text,bg=\ce@bg}
+\setbeamercolor{frametitle}{fg=\ce@text,bg=\ce@surface}
+\setbeamercolor{title}{fg=\ce@text,bg=\ce@surface}
+\setbeamercolor{subtitle}{fg=\ce@textmuted,bg=\ce@surface}
+\setbeamercolor{section in toc}{fg=\ce@text}
+\setbeamercolor{subsection in toc}{fg=\ce@textmuted}
+
+% Blocks (flat, minimal)
+\setbeamercolor{block title}{fg=\ce@accentfg,bg=\ce@accentbg}
+\setbeamercolor{block body}{fg=\ce@text,bg=\ce@surface}
+\setbeamercolor{block title alerted}{fg=white,bg=CENegative}
+\setbeamercolor{block body alerted}{fg=\ce@text,bg=\ce@surface}
+\setbeamercolor{block title example}{fg=white,bg=CEPositive}
+\setbeamercolor{block body example}{fg=\ce@text,bg=\ce@surface}
+
+% Footline / headline
+\setbeamercolor{title in head/foot}{fg=\ce@textmuted,bg=\ce@surface}
+\setbeamercolor{author in head/foot}{fg=\ce@textmuted,bg=\ce@surface}
+\setbeamercolor{date in head/foot}{fg=\ce@textmuted,bg=\ce@surface}
+
+% Itemize / enumerate
+\setbeamercolor{item}{fg=\ce@accentfg}
+\setbeamercolor{item projected}{fg=white,bg=\ce@accentfg}
+
+% Titlegraphic optional color
+\setbeamercolor{titlegraphic}{fg=\ce@accentfg}
+
+% Progress bar colors (defined later in footline)
+\setbeamercolor{progress bar}{fg=\ce@accentfg,bg=\ce@alt}
+
+% Minimal blocks option: remove background body if requested
+\ifdefined\CleanEasy@minimalblocks
+	\setbeamercolor{block body}{fg=\ce@text,bg=}
+	\setbeamercolor{block body alerted}{fg=\ce@text,bg=}
+	\setbeamercolor{block body example}{fg=\ce@text,bg=}
+\fi

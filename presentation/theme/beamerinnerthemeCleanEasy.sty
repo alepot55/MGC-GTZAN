@@ -21,10 +21,35 @@ color(0pt)=(lower.bg); color(2pt)=(lower.bg); color(4pt)=(lower.bg)}
 
 \setbeamertemplate{blocks}[rounded][shadow=false]
 
+% Modern block styling: replace default after initial definition
+% (keeps backward compatibility if 'legacy' option used later)
+\setbeamertemplate{blocks}[default]
+
+% Block styling: in modalità non accademica usiamo una barra verticale a tutta altezza
+% Implementata come una minipage laterale per coprire tutto il blocco (titolo + body)
+\ifdefined\CleanEasy@academic
+    % Stile sobrio: nessuna barra, solo padding più coerente
+    \addtobeamertemplate{block begin}{}{\vspace{-0.2em}}
+    \addtobeamertemplate{block end}{}{\vspace{-0.3em}}
+\else
+    % Wrapper ambiente per barra verticale completa
+    % Barra solo accanto al titolo (versione semplice e stabile)
+    \addtobeamertemplate{block begin}{}{\begingroup\color{CEAccent}\rule{0.18em}{0.9\baselineskip}\hspace{0.4em}\endgroup}
+    \addtobeamertemplate{block alerted begin}{}{\begingroup\color{CENegative}\rule{0.18em}{0.9\baselineskip}\hspace{0.4em}\endgroup}
+    \addtobeamertemplate{block example begin}{}{\begingroup\color{CEPositive}\rule{0.18em}{0.9\baselineskip}\hspace{0.4em}\endgroup}
+\fi
+
 \setbeamertemplate{enumerate items}[default]
 \setbeamertemplate{enumerate subitem}[default]
-\setbeamertemplate{itemize items}[circle]
-\setbeamertemplate{itemize subitem}[circle]
+% Itemize symbols
+\ifdefined\CleanEasy@icons
+    % Usa un glifo più moderno (triangolo oppure pallino accent) — qui usiamo un cerchio pieno accent
+    \setbeamertemplate{itemize item}{\color{CEAccent}\scriptsize\raise0.6pt\hbox{$\bullet$}}
+    \setbeamertemplate{itemize subitem}{\color{CEAccentDark}\tiny\raise0.8pt\hbox{$\blacksquare$}}
+\else
+    \setbeamertemplate{itemize items}[circle]
+    \setbeamertemplate{itemize subitem}[circle]
+\fi
 
 % table of contents (overview) settings
 \setbeamertemplate{section in toc}[sections numbered]
@@ -35,13 +60,63 @@ color(0pt)=(lower.bg); color(2pt)=(lower.bg); color(4pt)=(lower.bg)}
     \inserttocsubsection\par
 }
 
-% frame title customization
-\setbeamertemplate{frametitle}{%
-    \vspace*{0.5em}
-    \bfseries\insertframetitle\par
-    \vskip-6pt
-    \hrulefill\vspace{-0.1em}
-}
+% --------------------------------------
+% Global list spacing (Option A)
+% More vertical air between list items and slight padding before/after list blocks.
+% Applies uniformly to itemize and enumerate (including inside columns).
+% --------------------------------------
+% Hook at beginning of list body
+    \addtobeamertemplate{itemize/enumerate body begin}{%
+        % Rebalanced spacing: meno spazio iniziale (più vicino al titolo) ma ancora aria tra items
+        \setlength{\itemsep}{5pt}% spazio tra items (prima 7pt)
+        \setlength{\parsep}{0pt}% nessun paragrafo aggiuntivo
+        \setlength{\parskip}{0pt}% coerenza
+        \setlength{\topsep}{6pt}% ridotto (prima 12pt) per non spingere troppo il contenuto in basso
+        \setlength{\partopsep}{0pt}% evita accumulo
+        \vspace{2pt}% leggero margine sopra (prima 6pt)
+    }{}
+% Hook at end of list body
+\addtobeamertemplate{itemize/enumerate body end}{\vspace{2pt}}{}
+
+% Slightly larger separation for nested lists (2nd level)
+\def\CE@tweaknesting{\setlength{\itemsep}{4pt}\setlength{\topsep}{6pt}}
+\def\CE@tweaknesting{\setlength{\itemsep}{5pt}\setlength{\topsep}{8pt}}
+\addtobeamertemplate{itemize/enumerate subbody begin}{\CE@tweaknesting}{}
+
+% Ensure enumerate labels keep a consistent dot after number (defensive)
+\setbeamertemplate{enumerate item}{\insertenumlabel.}
+
+% frame title customization (switch if academic)
+\ifdefined\CleanEasy@academic
+    \setbeamertemplate{frametitle}{%
+        \nointerlineskip
+        % Più spazio superiore (prima 1.85em) per abbassare visivamente il titolo
+            \vspace*{2.05em}%
+        {\usebeamerfont{frametitle}\strut\insertframetitle\par}%
+        \ifx\insertframesubtitle\@empty\else
+            {\vspace{0.34em}\usebeamerfont{framesubtitle}\color{structure.fg!60}\insertframesubtitle\par}%
+        \fi
+        % Linea ravvicinata al titolo
+        \vspace{0.22em}% leggermente meno (prima 0.24em)
+        {\color{black!25}\rule{\linewidth}{0.45pt}}%
+        % Meno spazio dopo la linea (prima 0.55em) per ridurre il vuoto sotto
+        \vspace{0.28em}% spazio dopo la linea
+    }
+\else
+    \setbeamertemplate{frametitle}{%
+        \nointerlineskip
+        % Modern: aumentiamo leggermente lo spazio superiore (prima 1.60em)
+            \vspace*{1.75em}%
+        {\usebeamerfont{frametitle}\strut\insertframetitle\par}%
+        \ifx\insertframesubtitle\@empty\else
+            {\vspace{0.28em}\usebeamerfont{framesubtitle}\color{structure.fg!60}\insertframesubtitle\par}%
+        \fi
+        \vspace{0.20em}% leggermente meno (prima 0.22em)
+        {\color{CEAccent}\rule{\linewidth}{0.95pt}}%
+        % Riduciamo lo spazio dopo la linea (prima 0.55em)
+        \vspace{0.32em}%
+    }
+\fi
 
 % title page customization
 \setbeamertemplate{title page}{%

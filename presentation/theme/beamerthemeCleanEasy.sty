@@ -11,6 +11,54 @@
 %  Beamer Settings
 %--------------------------------------
 
+%--------------------------------------
+%  Options
+%  Available options:
+%    legacy        -> ripristina stile precedente (no minimal / progress bar)
+%    dark          -> modalità scura
+%    vibrant       -> palette più satura / vivace
+%    icons         -> bullets con icone
+%    minimalblocks -> blocks ancora più piatti (no bg, solo barra sinistra)
+%    academic      -> stile accademico sobrio (serif, colori neutri, footline minimale)
+%--------------------------------------
+\newif\ifce@legacy
+\newif\ifce@dark
+\newif\ifce@vibrant
+\newif\ifce@icons
+\newif\ifce@minimalblocks
+\newif\ifce@academic
+
+\DeclareOption{legacy}{\ce@legacytrue}
+\DeclareOption{dark}{\ce@darktrue}
+\DeclareOption{vibrant}{\ce@vibranttrue}
+\DeclareOption{icons}{\ce@iconstrue}
+\DeclareOption{minimalblocks}{\ce@minimalblockstrue}
+\DeclareOption{academic}{\ce@academictrue}
+\ProcessOptions\relax
+
+% Accent color (can be redefined before theme load by user)
+% Vibrant palette override (if user didn't predefine)
+\ifce@vibrant
+	\providecolor{CEAccent}{rgb}{0.16,0.38,0.90}   % blu acceso
+	\providecolor{CEAccentLight}{rgb}{0.88,0.93,0.99}
+	\providecolor{CEAccentDark}{rgb}{0.09,0.21,0.50}
+\else
+	\providecolor{CEAccent}{rgb}{0.05,0.45,0.75}
+	\providecolor{CEAccentLight}{rgb}{0.85,0.93,0.98}
+	\providecolor{CEAccentDark}{rgb}{0.02,0.25,0.45}
+\fi
+
+% Flag for internal usage (modern = not legacy)
+\newif\ifce@modern
+\ifce@legacy\ce@modernfalse\else\ce@moderntrue\fi
+
+% Pass dark flag to color theme via conditional macro
+\ifce@dark
+	\def\CleanEasy@colormode{dark}
+\else
+	\def\CleanEasy@colormode{light}
+\fi
+
 \mode<presentation>
 
 \usefonttheme{CleanEasy}
@@ -18,5 +66,18 @@
 \useinnertheme{CleanEasy}
 \useoutertheme{CleanEasy}
 
+% Provide helper commands for accent usage
+\newcommand{\accenttext}[1]{\textcolor{CEAccent}{#1}}
+\newcommand{\accentrule}{\par\vspace{2pt}\color{CEAccent}\rule{\linewidth}{1.2pt}\vspace{-0.6em}}
+
+% Expose internal flags for other .sty files
+\ifce@icons\def\CleanEasy@icons{1}\fi
+\ifce@minimalblocks\def\CleanEasy@minimalblocks{1}\fi
+\ifce@academic\def\CleanEasy@academic{1}\fi
+
+% If modern mode: reduce navigation symbols aggressively (already removed in inner theme)
+\ifce@modern
+	% Potential future modern hooks
+\fi
 
 \mode<all>

@@ -1,110 +1,176 @@
-## Discorso per la Presentazione
-Durata stimata: ~24–25 minuti
+### **Discorso Finale per la Presentazione**
+
+#### **Parte 1 - Speaker: Camilla (Slide 1–14)**
+
+
+**(Slide 1: Titolo)**
+
+Buongiorno professore. Sono Camilla Sed, e insieme al mio collega Alessandro Potenza, oggi le presentiamo il nostro progetto: uno studio di replicazione sulla classificazione automatica dei generi musicali.
+
+**(Slide 2: Introduzione al problema)**
+
+La classificazione dei generi musicali è un compito centrale nel Music Information Retrieval. In parole semplici, l'obiettivo è insegnare a un sistema ad assegnare il genere corretto – come rock, blues o classica – a un frammento audio. Questo ha applicazioni pratiche evidenti, come nei servizi di raccomandazione o nell'organizzazione di grandi archivi musicali.
+
+Il dominio è interessante anche dal punto di vista metodologico, perché i generi non sono entità rigide; presentano sovrapposizioni, ibridazioni e spesso etichette ambigue. Il punto di partenza del nostro lavoro è stato un risultato pubblicato recentemente da Patil e colleghi, che dichiarano un'eccezionale accuratezza del 99.41% sul dataset GTZAN con un modello basato su U-Net. Un valore quasi perfetto, su un benchmark noto per le sue imperfezioni, ci ha spinto a porci una domanda fondamentale: si tratta di un vero salto architetturale, o c'è una spiegazione metodologica dietro a questo risultato? Da qui è nata l'idea di una replica rigorosa.
+
+**(Slide 3: Obiettivi del progetto)**
+
+Per investigare questa domanda, abbiamo formulato tre obiettivi principali.
+Primo, **Replicare e Validare**: abbiamo implementato l'architettura U-Net basandoci sui dettagli disponibili nel paper e l'abbiamo testata all'interno di una nostra pipeline controllata, per verificare la plausibilità di quel 99.41%.
+Secondo, **Confrontare e Analizzare**: per contestualizzare la performance dell'U-Net, l'abbiamo confrontata con altre due architetture rappresentative, una più leggera e una più profonda, mantenendo un protocollo di training identico per tutti.
+Infine, **Estendere e Generalizzare**: abbiamo testato il modello su dataset molto diversi – per scala, cultura e tipo di task – per misurare la reale robustezza e riusabilità delle feature apprese. Implicitamente, il nostro quarto obiettivo era produrre un benchmark trasparente e riproducibile, per mitigare proprio l'ambiguità che avevamo riscontrato.
+
+**(Slide 4: Dataset)**
+
+Per raggiungere questi obiettivi, abbiamo utilizzato quattro dataset con caratteristiche complementari.
+Il **GTZAN** è stato il nostro punto di partenza obbligato per la replicazione, essendo il riferimento storico del paper.
+Successivamente, abbiamo introdotto **FMA Small**, un dataset molto più grande e realistico, che ha rappresentato un vero stress-test per la scalabilità dei modelli.
+Con l'**Indian Music Genre**, abbiamo testato l'adattabilità a un dominio culturale diverso, per capire se le feature apprese fossero realmente 'musicali' o solo legate allo stile occidentale.
+Infine, con **Tabla Taala**, un dataset di soli cicli ritmici, abbiamo verificato se un encoder addestrato su pattern armonici potesse essere riadattato a un compito puramente ritmico.
+
+**(Slide 5: Dalle onde ai Mel-spettrogrammi)**
+
+Le CNN sono nate per lavorare su immagini. Abbiamo quindi trasformato il segnale audio monodimensionale in una rappresentazione 2D: il Mel-spettrogramma. Utilizziamo 128 bande di frequenza Mel, che mimano la percezione uditiva umana, rendendo questa feature molto efficace. Dopo la Trasformata di Fourier a tempo breve (STFT), normalizziamo i dati usando esclusivamente le statistiche del training set, un passo cruciale per evitare data leakage. Questa pipeline ci permette di affrontare il problema come un compito di classificazione di immagini, mantenendo però l'informazione musicale rilevante.
+
+**(Slide 6: Visualizzazione delle feature)**
+
+Qui vediamo l'efficacia di questa trasformazione. Confrontando la forma d'onda con il Mel-spettrogramma per un brano Blues e uno di musica Classica, le differenze nelle texture spettrali diventano evidenti. Sono proprio questi pattern visivi che le nostre CNN imparano a riconoscere.
+
+**(Slide 7: Partizionamento e slicing)**
+
+Il dataset GTZAN ha solo 1000 brani, che sono pochi per il deep learning. Per aumentare la quantità di dati, abbiamo segmentato ogni traccia da 30 secondi in dieci clip da 3 secondi.
+
+Qui, però, si nasconde il dettaglio metodologico più importante: **evitare il data leakage**. Se avessimo prima segmentato e poi suddiviso i dati, frammenti della stessa canzone sarebbero finiti sia nel training che nel test set, portando il modello a imparare il 'fingerprint' di una traccia invece delle caratteristiche del genere. Per evitare questo 'imbroglio', abbiamo prima suddiviso i brani interi a livello di file, e solo dopo abbiamo effettuato lo slicing all'interno di ciascun set. Questo rigore metodologico è ciò che garantisce la validità scientifica dei nostri risultati.
+
+**(Slide 8: Architetture di confronto)**
+
+Una volta preparati i dati, per condurre un'analisi rigorosa, abbiamo implementato tre modelli, ciascuno rappresentativo di una diversa filosofia architetturale.
+
+Il primo è l'Efficient-VGG. Lo consideriamo la nostra baseline di efficienza. Ispirato alla classica architettura VGG, è un modello volutamente semplice e leggero, con soli 35mila parametri. Il suo scopo è definire la performance minima attesa e rispondere a una domanda fondamentale: è necessaria una grande complessità per questo task? Questo modello ci fornisce un solido punto di riferimento per valutare il beneficio reale delle architetture più avanzate.
+
+Il secondo modello è il ResSE-AudioCNN, che rappresenta il nostro termine di paragone ad alte prestazioni. È un'architettura moderna e profonda, con circa 1.2 milioni di parametri, che combina due idee potenti. La sua base in stile ResNet gli permette di essere molto profondo senza perdere efficacia nell'addestramento, grazie alle connessioni residue. In più, integra un meccanismo di attenzione (SE), che insegna al modello a "pesare" le feature spettrali più importanti, concentrandosi solo su ciò che è rilevante per la classificazione. È, a tutti gli effetti, il nostro concorrente di riferimento che rappresenta lo stato dell'arte.
+
+**(Slide 9: Il classificatore U-Net)**
+
+E infine, arriviamo al protagonista della nostra indagine: il classificatore basato su U-Net.
+
+L'architettura U-Net nasce per la segmentazione di immagini, un compito in cui è fondamentale analizzare un'immagine a diverse scale di dettaglio. Abbiamo adattato questa potente idea al nostro problema. Anziché utilizzare l'intera struttura a forma di "U", abbiamo impiegato esclusivamente il suo ramo encoder, ovvero la parte di contrazione.
+
+La logica è semplice: questo ramo è un potentissimo estrattore di feature. Man mano che scende in profondità, cattura pattern spettrali sempre più astratti e complessi, proprio ciò che ci serve per distinguere i generi. Abbiamo quindi rimosso la parte di ricostruzione (il decoder) e l'abbiamo sostituita con una "testa" di classificazione composta da due elementi cruciali.
+
+Il primo è il Global Average Pooling. Il suo compito è di riassumere in modo intelligente tutte le feature estratte. In pratica, prende ogni mappa di caratteristiche bidimensionale prodotta dall'encoder e la condensa in un singolo numero, la sua media. Questo trasforma una rappresentazione complessa e spaziale in un vettore di feature compatto e gestibile, rendendo il modello più robusto.
+
+Questo vettore viene poi passato al classificatore finale. È l'ultimo passo, dove il modello prende la decisione vera e propria. Si tratta di un semplice layer denso con un neurone per ogni genere musicale. Riceve le caratteristiche compattate e il suo output è la probabilità che il frammento audio appartenga a ciascuna classe, dicendoci ad esempio: "questo brano è al 95% Classica, al 3% Jazz, e così via".
+
+Con circa 1.18 milioni di parametri, la sua complessità è quasi identica a quella del nostro ResNet. Questo è un punto cruciale, perché ci ha permesso di realizzare un confronto diretto e onesto, non basato sulla dimensione, ma sulla pura efficacia delle rispettive filosofie architetturali.
+
+**(Slide 10: Protocollo di training)**
+
+Per garantire un confronto onesto, abbiamo standardizzato ogni aspetto del training: stesso ottimizzatore Adam, stessa loss, stesse callback come l'Early Stopping. Abbiamo fissato tutti i semi casuali e usato, dove possibile, operazioni deterministiche. Questo approccio minimizza le variabili confondenti e ci permette di attribuire le differenze di performance direttamente alle scelte architetturali.
+
+**(Slide 11: Iperparametri chiave)**
+
+Questa tabella riassume gli iperparametri principali. L'aspetto importante qui non sono i valori assoluti, ma la loro coerenza attraverso tutti gli esperimenti. Questo rigore ci permette di trarre conclusioni affidabili.
+
+**(Slide 12: Risultati GTZAN - overview)**
+
+Passiamo ora ai risultati su GTZAN. La conclusione principale è che l'architettura U-Net è emersa come il modello più performante nel nostro setup, superando chiaramente le altre due.
+
+**(Slide 13: Metriche GTZAN)**
+
+Analizzando le metriche, vediamo che l'U-Net raggiunge l'82.3% di accuratezza sul test set, circa tre punti percentuali sopra il ResNet. È interessante notare che ottiene questo vantaggio con una capacità simile in termini di parametri e, come vedremo, con una latenza leggermente inferiore, rendendolo un'opzione molto efficiente.
+
+**(Slide 14: Accuratezza vs Efficienza)**
+
+Questo grafico visualizza il trade-off tra prestazioni ed efficienza. L'obiettivo è essere in alto a sinistra. Il punto blu, il nostro U-Net, si posiziona chiaramente come la scelta migliore, offrendo l'accuratezza più alta senza un costo computazionale superiore a quello del ResNet. Il trade-off è dunque nettamente favorevole all'architettura U-Net.
+
+**(Passaggio ad Alessandro)**
+
 
 ---
-### Slide 1 – Titolo
-Camilla: Buongiorno professore. Sono Camilla Sed, insieme al mio collega Alessandro Potenza. Oggi presentiamo il nostro progetto: uno studio di replicazione sulla classificazione automatica dei generi musicali.
 
-### Slide 2 – Introduzione al problema
-Camilla: La classificazione dei generi musicali (Music Genre Classification) è un compito centrale nel Music Information Retrieval. In termini molto concreti: date alcune decine di secondi di audio, vogliamo che un sistema assegni il genere corretto – rock, blues, classica, ecc. Questo abilita servizi di raccomandazione più intelligenti, organizzazione automatica delle librerie, estrazione di metadati in archivi di grandi dimensioni. Il dominio è anche metodologicamente interessante perché i generi non sono entità rigidamente definite: esiste sovrapposizione timbrica, ibridazione stilistica, e rumore etichettativo nei dataset.
-Un punto di partenza del nostro lavoro è stato un risultato pubblicato recentemente da Patil e colleghi: un modello basato su U‑Net che dichiara il 99.41% di accuratezza sul dataset GTZAN. Un valore quasi perfetto su un benchmark notoriamente imperfetto e rumoroso. Questo scarto rispetto alla fascia tipica (90–95% nei migliori lavori) ci ha spinto a chiederci: è davvero un salto architetturale, oppure c’è una spiegazione metodologica? Da qui nasce l'idea di una replica rigorosa, con estensioni controllate.
+#### **Parte 2 - Speaker: Alessandro (Slide 15–29)**
 
-### Slide 3 – Obiettivi del progetto
-Camilla: Gli obiettivi sono stati tre, formulati per isolare cause e valutare robustezza.
-1. Replicare e validare: implementare l'architettura U‑Net descritta (o ricostruibile dai dettagli disponibili) e testarla in una pipeline controllata su GTZAN per verificare la plausibilità del 99.41%.
-2. Confrontare e analizzare: includere due architetture rappresentative (una leggera e una più profonda) con identico protocollo, in modo da attribuire differenze a scelte strutturali e non a iperparametri.
-3. Estendere e generalizzare: spingere il modello oltre il dominio originale, testando trasferibilità su dataset più ampi (FMA), culturalmente diversi (Indian) e ritmicamente specializzati (Tabla). L'obiettivo è misurare se le feature apprese siano riusabili o se collassino fuori dal dominio.
-In filigrana c'è anche un quarto obiettivo implicito: produrre un benchmark trasparente, con codice riproducibile e scelte motivate, proprio per mitigare l'ambiguità che abbiamo riscontrato nel lavoro di partenza.
 
-### Slide 4 – Dataset (introduzione)
-Camilla: Abbiamo utilizzato quattro dataset con caratteristiche complementari. Lascio ora la parola ad Alessandro per la descrizione dettagliata.
+**(Slide 15: Ablation - SpecAugment)**
 
-### Slide 4 (continua) – Dataset
-Camilla: La scelta dei dati è stata strategica. GTZAN è il riferimento storico (10 generi × 100 tracce), indispensabile per la replicazione. Sappiamo che contiene alcune problematiche note (duplicati, clip potenzialmente corrotti in alcune distribuzioni); abbiamo utilizzato una versione pulita e documentato l'elenco dei file usati per garantire tracciabilità.
-FMA Small introduce maggiore scala (8k tracce) e diversità reale: più rumore etichettativo e maggiore eterogeneità di produzione audio. È un banco di prova per la scalabilità delle feature.
-Il dataset Indian Music Genre ci permette di valutare un cambio culturale: cambiamenti nelle scale, strumenti, strutture timbriche. Qui testiamo quanto le feature apprese siano realmente “musicali” e non sovra‑specializzate su stile occidentale.
-Infine Tabla Taala, focalizzato su cicli ritmici con strutture metriche ripetitive, ci permette di verificare se un encoder addestrato prevalentemente su pattern armonico‑melodici possa essere ri‑adattato a un compito dominato da micro‑pattern ritmici.
+Successivamente, abbiamo valutato l'impatto della data augmentation (SpecAugment). La domanda era: questa tecnica aiuta sempre? La nostra analisi ha mostrato che la risposta è 'no'. Solo l'architettura U-Net, la più capiente, ha tratto un beneficio netto. I modelli più piccoli hanno subito un lieve degrado. Questo indica una forte interazione tra la capacità del modello e la sua abilità di sfruttare tecniche di regolarizzazione aggressive.
 
-### Slide 5 – Dalle onde ai Mel‑spettrogrammi
-Camilla: Le CNN lavorano su immagini; trasformiamo quindi l'audio in rappresentazioni 2D: i Mel‑spettrogrammi. Usiamo tipicamente 128 mel bins, una finestra (FFT window) di 2048 campioni e un hop di 512 (75% overlap). Questo compromesso offre sufficiente risoluzione in frequenza per distinguere timbri e un numero gestibile di frame temporali nei 3 secondi. Dopo la STFT applichiamo il banco di filtri Mel, il log scaling e normalizziamo solo usando statistiche del training set (per evitare leakage). Questa pipeline rende il problema vicino all'image classification mantenendo informazione rilevante per genere e ritmo.
+**(Slide 16: Risultati SpecAugment)**
 
-### Slide 6 – Visualizzazione delle feature
-Camilla: Qui vediamo la differenza tra forma d'onda e Mel‑spettrogramma per due brani (Blues e Classica). Le differenze strutturali e di tessitura spettrale evidenziano perché questa trasformazione renda il problema trattabile per una CNN.
+Il grafico conferma questo risultato in modo visivo: un guadagno modesto ma consistente per l'U-Net e un lieve peggioramento per gli altri due.
 
-### Slide 7 – Partizionamento e slicing
-Camilla: GTZAN contiene solo 1000 tracce: pochino per il deep learning. Segmentiamo ogni brano di 30 secondi in dieci clip da 3 secondi, ampliando il training set di un ordine di grandezza. Perché 3 secondi? È un compromesso: abbastanza lunghi da includere frammenti ritmici e intervalli armonici, abbastanza corti da moltiplicare i campioni e ridurre overfitting. Abbiamo testato anche 2 e 5 secondi in analisi preliminari: 2 secondi aumentavano il rumore, 5 riducevano la variabilità di batch.
-Il punto critico è evitare il data leakage: se segmentassimo prima e dividessimo poi casualmente, clip dello stesso brano apparirebbero in train e test e il modello imparerebbe l'impronta specifica (fingerprinting) invece delle invarianti di genere. Per evitare questo imbroglio, prima suddividiamo a livello di brano (train / validation / test) mantenendo stratificazione, poi effettuiamo lo slicing dentro ciascuno split. Questo rigore metodologico distingue il nostro lavoro e rende i risultati scientificamente solidi. In aggiunta, generiamo i batch mescolando clip di brani diversi per evitare correlazione sequenziale.
+**(Slide 17: Robustezza - 5-Fold Cross-Validation)**
 
-### Slide 8 – Architetture di confronto
-Camilla: Abbiamo implementato tre modelli. Efficient‑VGG: leggero (≈35k parametri), baseline efficiente. ResSE‑AudioCNN: architettura più profonda in stile ResNet (≈1.2M parametri) con skip connection e maggiore capacità. Servono come termini di paragone equilibrati per prestazioni e complessità.
+Per essere sicuri che i nostri risultati non fossero dovuti a una singola suddivisione fortunata dei dati, abbiamo eseguito una cross-validation a 5-fold sull'U-Net. Qui abbiamo ottenuto il nostro risultato più solido su GTZAN: un'accuratezza media di validazione del **90.44%**. È importante notare che questa è un'accuratezza di *validazione* media, ed è più alta del nostro test set perché ad ogni fold il modello viene addestrato sull'80% dei dati. Il dato cruciale è la deviazione standard bassissima, sotto l'1%, che conferma l'eccezionale stabilità e robustezza del modello.
 
-### Slide 9 – Il classificatore U‑Net
-Camilla: La nostra implementazione dell'idea del paper utilizza solo il ramo encoder della U‑Net, sfruttando la progressiva astrazione gerarchica delle feature. In coda applichiamo Global Average Pooling e un denso finale per la classificazione. Con circa 1.18M parametri, la complessità è comparabile al modello ResNet, ma l'organizzazione multi‑scala dell'encoder facilita la cattura di pattern sia locali sia contestuali.
+**(Slide 18: Analisi qualitativa del modello)**
 
-### Slide 10 – Protocollo di training
-Camilla: Standardizziamo ogni aspetto: ottimizzatore Adam (lr iniziale 1e-3 con riduzione on plateau), cross‑entropy categoriale, early stopping con pazienza di 12 epoch sulla validation accuracy, restore dei pesi migliori, gradient clipping dove necessario per stabilità. Fissiamo tutti i semi (Python, NumPy, TensorFlow) e usiamo deterministic ops dove possibile. Stesso scheduler, stessa dimensione batch (32), stessa normalizzazione per tutti. Questo minimizza le variabili confondenti nel confronto fra architetture. L'hardware principale: GPU Nvidia serie RTX; riportiamo i tempi di epoca e la latenza media di inferenza su batch di 1 per trasparenza sperimentale.
+Ma oltre ai numeri, volevamo capire *dove* il nostro modello campione eccelle e dove fallisce.
 
-### Slide 11 – Iperparametri chiave
-Camilla: La tabella riporta i principali iperparametri (lr iniziale, scheduler, batch size, numero massimo di epoch, pazienza dell'early stopping, dropout, specaugment mask parametri). L'enfasi non è sui valori assoluti, ma sulla loro coerenza: mantenerli invariati ci permette di attribuire differenze di performance a scelte architetturali e non a fine‑tuning opportunistico.
+**(Slide 19: Classification report)**
 
-### Slide 12 – Risultati GTZAN (overview)
-Camilla: La U‑Net risulta il modello più performante nel nostro setup, emergendo chiaramente sugli altri due in termini di accuratezza mantenendo efficienza parametrica.
+Il classification report ci mostra che il modello è quasi perfetto su generi con una firma acustica netta, come la Classica (F1-score di 0.98) e il Jazz (0.93). La sua debolezza principale è sul genere Rock, con un F1-score di appena 0.61.
 
-### Slide 13 – Metriche GTZAN
-Camilla: Sul test set l'U‑Net raggiunge l'82.3%, circa tre punti sopra il modello ResNet‑like. Interessante il fatto che ottenga questo vantaggio con una leggera riduzione della latenza e una capacità simile in termini di parametri. La latenza è misurata come media di 100 forward pass su singolo clip (warm‑up escluso). Questo fornisce un indicatore pratico per eventuale deploy.
+**(Slide 20: Confusion matrix - visualizzazione)**
 
-### Slide 14 – Accuratezza vs Efficienza
-Camilla: Il grafico posiziona i modelli nello spazio prestazioni/efficienza. La U‑Net occupa la regione desiderata: accurata e relativamente leggera. Il trade‑off è dunque favorevole.
+E la matrice di confusione ci spiega visivamente il perché.
 
-### Slide 15 – Ablation: SpecAugment
-Camilla: Abbiamo valutato l'effetto di SpecAugment (mascheramento di bande di frequenza e intervalli temporali). Solo la U‑Net trae un beneficio netto; i modelli più piccoli subiscono un lieve degrado, probabilmente perché l'augmentation rimuove porzioni di informazione discriminante oltre la loro capacità di ricostruzione interna. Questo indica un'interazione architettura–regularizzazione: tecniche aggressive richiedono capacità sufficiente a sfruttarle.
+**(Slide 21: Analisi della confusion matrix)**
 
-### Slide 16 – Risultati SpecAugment
-Alessandro: Il grafico conferma: guadagno moderato ma consistente per U‑Net, lieve peggioramento per gli altri due modelli.
+La diagonale marcata conferma l'alta accuratezza generale. Gli errori non sono casuali: il 'rock' viene spesso confuso con 'country' e 'disco', e il 'reggae' con l' 'hiphop'. Si tratta di confusioni musicalmente coerenti, che riflettono la prossimità spettrale di questi generi e la difficoltà intrinseca di distinguerli basandosi solo su frammenti di 3 secondi.
 
-### Slide 17 – Robustezza: 5‑Fold Cross‑Validation
-Alessandro: Per ridurre la dipendenza da un singolo split abbiamo eseguito una 5‑fold cross‑validation su GTZAN con U‑Net (split a livello di traccia, folds stratificati). Media di validazione: 90.44% con deviazione standard sotto 0.7 p.p. È superiore all'82.3% del test finale perché in ciascun fold il modello vede l'80% dei brani (non solo il 60% usato nel training dello split principale). Il valore aggiunto della CV è la bassa varianza: riduce la probabilità che il test set sia stato particolarmente favorevole o sfavorevole.
+**(Slide 22: Oltre GTZAN - generalizzazione cross-dataset)**
 
-### Slide 18 – Analisi qualitativa del modello
-Alessandro: Oltre alla metrica aggregata, analizziamo dove il modello eccelle e dove mostra fragilità, per orientare possibili estensioni future.
+Una volta validata la nostra architettura su GTZAN, abbiamo voluto testarne la reale robustezza. Per farlo, abbiamo seguito due strategie complementari: la prima, addestrare il modello da zero sul complesso dataset FMA, per valutarne le capacità di apprendimento generali. La seconda, usare il transfer learning sui domini specializzati Indian e Tabla, per misurare quanto fossero realmente generalizzabili le feature già apprese.
 
-### Slide 19 – Classification report
-Alessandro: Generi con firme acustiche nette (Classica, Jazz) raggiungono F1 molto elevati (Classica 0.98). Rock scende a 0.61, penalizzato dal recall; molte tracce rock condividono pattern ritmici e strumenti con country e disco rendendo ambigua la decisione su frammenti corti. Questo suggerisce due possibili direzioni future: (1) incorporare segmenti più lunghi per catturare progressioni armoniche; (2) usare modelli con attenzione temporale per integrare contesto multi‑scala.
+**(Slide 23: Risultati di generalizzazione)**
 
-### Slide 20 – Confusion matrix (visualizzazione)
-Alessandro: La matrice fornisce la mappa degli errori e prepara l'interpretazione dettagliata.
+Questo grafico mette a confronto diretto le nostre performance. La barra blu rappresenta il nostro modello U-Net, mentre la barra rossa indica una baseline di riferimento pubblicata in letteratura per ciascun dataset. Questo ci permette di contestualizzare i nostri risultati in modo onesto. 
 
-### Slide 21 – Analisi della confusion matrix
-Alessandro: La diagonale marcata conferma l'accuratezza globale. Le confusioni Rock→Country/Disco e Reggae→Hiphop riflettono prossimità spettrale (pattern di chitarra ritmica simili, uso di batteria quantizzata). Con soli 3 secondi il contesto strutturale (transizioni, dinamiche più lente) non entra. Per distinguere generi così simili potrebbe essere necessario aggregare informazioni su scale temporali più lunghe o integrare feature ritmiche derivate (tempo, onset pattern).
+Come si può vedere, su GTZAN e FMA otteniamo risultati solidi e riproducibili. Ma il dato più interessante emerge con il transfer learning: non solo otteniamo ottimi risultati su Indian Music, ma sul dataset Tabla Taala riusciamo a superare la baseline esistente.
 
-### Slide 22 – Oltre GTZAN: generalizzazione cross‑dataset
-Alessandro: Esploriamo ora la trasferibilità: addestramento da zero su un dataset complesso (FMA) e transfer learning verso domini diversi (Indian, Tabla). Due strategie complementari per valutare robustezza e riuso delle feature.
+**(Slide 24: Interpretazione dei risultati)**
 
-### Slide 23 – Risultati di generalizzazione
-Alessandro: Il grafico sintetizza il quadro. Training da zero su FMA Small: 41.1% (coerente con la difficoltà del benchmark, etichette rumorose e generi sovrapposti). Fine‑tuning del modello pre‑addestrato su GTZAN: salti al 72.2% su Indian Music Genre e al 96.5% su Tabla Taala. In fase di transfer congeliamo gli strati iniziali (feature generiche) e ri‑addestriamo i blocchi superiori e il classificatore; su Tabla basta ri‑adattare soprattutto il classifier head. Figure: The U-Net's performance across all datasets. Transfer learning (Indian, Tabla) yields significantly better results than training from scratch on a complex dataset (FMA), highlighting the adaptability of the learned features.
+Analizzando i numeri che abbiamo appena visto: su FMA Small, il nostro 41.1% di accuratezza conferma la nota difficoltà del benchmark, dove la letteratura per CNN simili si attesta tipicamente tra il 50 e il 65%. Il nostro risultato, pur essendo inferiore, è quindi un'onesta misura della sfida.
 
-### Slide 24 – Interpretazione dei risultati
-Alessandro: Il 41.1% su FMA, pur non elevato, supera di molto il caso e conferma la natura impegnativa del dataset. Il 72.2% su musica non occidentale mostra che molte feature timbriche e ritmiche apprese su GTZAN sono riutilizzabili. Il 96.5% su Tabla indica una forte capacità di adattamento a un compito diverso (pattern ritmici ciclici) partendo da feature più generali.
+Il vero potenziale della nostra architettura, però, emerge con il transfer learning. Abbiamo raggiunto il 72.2% sul dataset di musica indiana, confermando che le feature apprese sono in gran parte universali. Ma il risultato più notevole è stato il 96.5% sul dataset Tabla Taala, dove abbiamo superato la baseline. 
 
-### Slide 25 – Matrici di confusione cross‑dataset
-Alessandro: Le matrici per GTZAN e Tabla mostrano diagonali pulite; quella per FMA appare più diffusa, coerente con l'elevata sovrapposizione tra classi e la maggiore variabilità interna.
+Questo dimostra che il nostro modello ha imparato a riconoscere pattern così fondamentali da poterli riadattare con successo, passando dalla classificazione di generi al riconoscimento di strutture ritmiche finissime con alta precisione.
 
-### Slide 26 – Discrepanza con il paper originale
-Alessandro: Rimane la domanda: perché non raggiungiamo il 99.41% riportato da Patil et al.? Una differenza di circa 9 punti percentuali è troppo ampia per attribuirla a meri dettagli implementativi.
+**(Slide 25: Matrici di confusione cross-dataset)**
 
-### Slide 27 – Possibili cause della discrepanza
-Alessandro: L'ipotesi principale è metodologica: data splitting potenzialmente effettuato dopo lo slicing, generando leakage (clip sorelle in train e test) e trasformando il problema in audio fingerprinting, più semplice e meno rappresentativo della generalizzazione. A questo si sommano (1) ambiguità nella descrizione del loro "modello matematico" che impedisce replica bit‑a‑bit, (2) mancanza di indicazione esplicita su come sia stata gestita la standardizzazione, (3) assenza di cross‑validation o statistica di dispersione. Il 99.41% risulta quindi un outlier non corroborato da elementi metodologici sufficienti.
+Questa slide visualizza la differenza: le matrici per GTZAN e Tabla sono 'pulite', con diagonali forti. Quella per FMA è molto più 'diffusa', riflettendo la maggiore complessità e sovrapposizione tra le classi di quel dataset.
 
-### Slide 28 – Conferma dell'efficienza architetturale
-Alessandro: Pur non replicando l'accuratezza dichiarata, confermiamo un punto sostanziale del paper: l'encoder U‑Net offre un eccellente equilibrio fra costo computazionale e prestazioni rispetto a una ResNet standard di capacità simile.
+**(Slide 26: Discrepanza con il paper originale)**
 
-### Slide 29 – Conclusioni e contributi principali
-Alessandro: Riassumendo:
-1. L'encoder U‑Net è un'architettura efficace: benchmark trasparente e riproducibile del 90.44% (media CV) / 82.3% (test) su GTZAN.
-2. Il 99.41% del paper di riferimento è molto probabilmente influenzato da fattori metodologici (verosimile data leakage) più che da superiorità architetturale.
-3. Forte adattabilità tramite transfer learning (fino al 96.5% su Tabla Taala) anche in domini culturalmente e strutturalmente differenti.
-4. Rilevanza del rigore: il progetto evolve da semplice replicazione a caso di studio sulla trasparenza e sulle pratiche sperimentali corrette. In definitiva, questo lavoro si trasforma soprattutto in un contributo metodologico: mostra come il controllo del leakage e la standardizzazione siano decisivi per interpretare correttamente risultati elevati.
-Chiudo sottolineando che tutto il codice è strutturato per riproduzione: script di preprocessing, configurazioni esplicite e fissaggio dei semi. Questo, a nostro avviso, è il contributo duraturo oltre ai numeri specifici.
+Arriviamo quindi alla domanda finale. Perché non raggiungiamo il 99.41% riportato nel paper di riferimento? Una differenza di 9 punti percentuali è troppo ampia per essere spiegata solo da piccoli dettagli implementativi.
 
----
-Fine.
+**(Slide 27: Possibili cause della discrepanza)**
+
+La nostra analisi indica che la causa di questo divario di 9 punti non sia architetturale, ma metodologica. Abbiamo individuato tre prove a sostegno di questa tesi.
+
+Primo, e più importante, il rischio di data leakage. Il paper non chiarisce il suo protocollo di split. Sospettiamo fortemente che abbiano effettuato lo slicing prima della suddivisione, una pratica errata che trasforma il problema in 'audio fingerprinting' e gonfia i risultati. Il nostro protocollo a livello di traccia, invece, previene questo errore.
+
+Secondo, l'ambiguità del loro modello. La descrizione del loro 'modello matematico' è troppo vaga per permettere una replica fedele, impedendo una verifica diretta delle loro affermazioni.
+
+Terzo, il loro risultato è un outlier. Un'accuratezza del 99.41% è statisticamente anomala rispetto a decenni di ricerca su GTZAN, dove i risultati più solidi e affidabili si attestano tra il 90 e il 95%.
+
+In sintesi, tutti gli indizi ci portano a concludere che la differenza sia dovuta al loro setup sperimentale, non a una superiorità del loro modello.
+
+**(Slide 28: Conferma dell'efficienza architetturale)**
+
+Tuttavia, pur non replicando l'accuratezza, il nostro lavoro **conferma un punto sostanziale del paper**: l'encoder U-Net offre davvero un equilibrio superiore tra prestazioni e costo computazionale rispetto a una ResNet standard. Su questo, le nostre conclusioni sono allineate.
+
+**(Slide 29: Conclusioni e contributi principali)**
+
+Riassumendo, i nostri contributi principali sono quattro:
+1.  Abbiamo stabilito che l'**encoder U-Net è un'architettura efficace**, definendo un benchmark trasparente e riproducibile del 90.44% (media CV) su GTZAN.
+2.  Abbiamo concluso che il **gap di performance** con il paper di riferimento è molto probabilmente dovuto a **fattori metodologici**, non a una superiorità architetturale.
+3.  Abbiamo dimostrato la **forte adattabilità** del modello tramite transfer learning, raggiungendo fino al 96.5% su un compito diverso.
+4.  Infine, questo lavoro si trasforma in un caso di studio sulla **rilevanza del rigore metodologico**, mostrando come il controllo del leakage e la standardizzazione siano decisivi per interpretare correttamente i risultati. Crediamo che questo, al di là dei numeri, sia il contributo più duraturo del nostro progetto.
+
+**(Fine)**
+
+
+Fine. Grazie per l'attenzione. Siamo a disposizione per qualsiasi domanda.

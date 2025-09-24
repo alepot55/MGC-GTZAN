@@ -18,19 +18,32 @@
 \setbeamertemplate{navigation symbols}{}
 
 
-% Standard footline
-\defbeamertemplate*{footline}{CleanEasy theme}{%
-  \leavevmode%
+% Standard footline (legacy kept for reference under name CleanEasy legacy)
+\defbeamertemplate*{footline}{CleanEasy legacy}{%
+  \leavevmode
   \hbox{%
     \begin{beamercolorbox}[wd=.2\paperwidth,ht=2.25ex,dp=1ex,left]{author in head/foot}%
-      \usebeamerfont{author in head/foot}\hspace*{3ex}\textcolor{fg!30}{\insertshortauthor} \end{beamercolorbox}%
+      \usebeamerfont{author in head/foot}\hspace*{3ex}\textcolor{fg!50}{\insertshortauthor}\end{beamercolorbox}%
     \begin{beamercolorbox}[wd=.65\paperwidth,ht=2.25ex,dp=1ex,center]{title in head/foot}%
-      \usebeamerfont{title in head/foot}\textcolor{fg!30}{\insertshorttitle}
-    \end{beamercolorbox}%
+      \usebeamerfont{title in head/foot}\textcolor{fg!50}{\insertshorttitle}\end{beamercolorbox}%
     \begin{beamercolorbox}[wd=.15\paperwidth,ht=2.25ex,dp=1ex,right]{date in head/foot}%
-      \usebeamerfont{date in head/foot}\textcolor{fg!30}{\insertshortdate{}\hspace*{2ex} \insertframenumber{}/\inserttotalframenumber}\hspace*{2ex}
-    \end{beamercolorbox}}%
-  \vskip0pt%
+      \usebeamerfont{date in head/foot}\textcolor{fg!50}{\insertframenumber{}/\inserttotalframenumber}\hspace*{1.2ex}\end{beamercolorbox}%
+  }\vskip0pt
+}
+
+% Modern minimal footline with progress bar
+\defbeamertemplate*{footline}{CleanEasy modern}{%
+  \leavevmode
+  \begin{beamercolorbox}[wd=\paperwidth,ht=2.2ex,dp=0.6ex,left]{title in head/foot}
+    \usebeamerfont{title in head/foot}\hspace*{0.8ex}\insertshorttitle\hfill\insertframenumber/\inserttotalframenumber\hspace*{0.8ex}
+  \end{beamercolorbox}%
+  % Progress bar
+  \begin{beamercolorbox}[wd=\paperwidth,ht=0.9pt,dp=0pt,left]{progress bar}
+    % Background track
+    \color{progress bar.bg}\rule{\paperwidth}{0.9pt}%
+    % Foreground progress (simple proportional width)
+    \color{progress bar.fg}\rule{\dimexpr \paperwidth * \insertframenumber / \inserttotalframenumber \relax}{0.9pt}%
+  \end{beamercolorbox}
 }
 
 % Empty footline for title and plain pages
@@ -48,11 +61,15 @@
 
 % Section page
 \defbeamertemplate*{section page}{CleanEasy theme}{%
-  \begin{centering}
-    \begin{beamercolorbox}[sep=12pt,center]{part title}
-      \usebeamerfont{section title}\insertsection\par
-    \end{beamercolorbox}
-  \end{centering}
+  \begin{frame}[plain]
+    \vfill
+    \begin{center}
+      {\usebeamerfont{title}\color{structure.fg}\insertsection\par}
+      \vspace{0.6em}
+      {\color{CEAccent}\rule{0.55\linewidth}{2pt}}\par
+    \end{center}
+    \vfill
+  \end{frame}
 }
 
 % Sidebar navigation (disabled by default)
@@ -75,42 +92,61 @@
 
 % Special handling for title page
 \AtBeginDocument{%
-  \setbeamertemplate{footline}[CleanEasy theme]
+  % Select footline variant depending on legacy flag (set in main theme)
+  \ifdefined\CleanEasy@academic
+    % Footline accademico: solo numero pagina / totale
+    \defbeamertemplate*{footline}{CleanEasy academic}{%
+      \leavevmode
+      \hfill\usebeamerfont{date in head/foot}\insertframenumber/\inserttotalframenumber\hspace*{1.2ex}\vskip2pt}
+    \setbeamertemplate{footline}[CleanEasy academic]
+  \else
+    \ifdefined\ce@legacy
+      \setbeamertemplate{footline}[CleanEasy legacy]
+    \else
+      \setbeamertemplate{footline}[CleanEasy modern]
+    \fi
+  \fi
   
   % Use empty footline for title page and TOC
   \BeforeBeginEnvironment{frame}{%
-    \setbeamertemplate{footline}[CleanEasy theme]%
+    \ifdefined\CleanEasy@academic
+      \setbeamertemplate{footline}[CleanEasy academic]%
+    \else
+      \ifdefined\ce@legacy
+        \setbeamertemplate{footline}[CleanEasy legacy]%
+      \else
+        \setbeamertemplate{footline}[CleanEasy modern]%
+      \fi
+    \fi
   }
   
   \apptocmd{\maketitle}{%
-    \setbeamertemplate{footline}[empty]%
+    \setbeamertemplate{footline}[empty]% (title page)
   }{}{}
   
   \apptocmd{\tableofcontents}{%
-    \setbeamertemplate{footline}[empty]%
+    \setbeamertemplate{footline}[empty]% (TOC)
   }{}{}
 }
 
-\AtBeginSection[]
-{
-  \begin{frame}[plain]
-    \begin{tikzpicture}[remember picture,overlay]
-      % Fundo limpo
-      \fill[MediumBlue!5] (current page.north west) rectangle (current page.south east);
-      
-      % Título da seção
-      \node[
-        anchor=west, 
-        text width=0.6\paperwidth, 
-        align=left, 
-        font=\Large\bfseries
-      ] at ([xshift=-2cm]current page.center) {
-        \insertsectionhead
-      };
-      
-      % Linha horizontal
-      \draw[thick, DarkBlue!40] 
-        ([xshift=-2cm, yshift=-1cm]current page.center) -- ++(\paperwidth/2,0);
-    \end{tikzpicture}
-  \end{frame}
+\AtBeginSection[]{
+  \ifdefined\CleanEasy@academic
+    \begin{frame}[plain]
+      \vfill
+      \centering
+      {\usebeamerfont{frametitle}\insertsectionhead\par}
+      \vspace{0.4em}
+      {\color{black!25}\rule{0.35\linewidth}{0.6pt}}\par
+      \vfill
+    \end{frame}
+  \else
+    \begin{frame}[plain]
+      \vfill
+      \centering
+      {\usebeamerfont{title}\color{structure.fg}\insertsectionhead\par}
+      \vspace{0.6em}
+      {\color{CEAccent}\rule{0.45\linewidth}{1.6pt}}\par
+      \vfill
+    \end{frame}
+  \fi
 }

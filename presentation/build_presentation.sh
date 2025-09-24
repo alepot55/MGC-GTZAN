@@ -24,7 +24,7 @@ set -euo pipefail
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 cd "$SCRIPT_DIR"
 
-SOURCE="CleanEasy.tex"
+SOURCE="main.tex"
 OUTDIR="build"
 FINAL_PDF="${SOURCE%.tex}.pdf"
 PDF_OUTPUT="${OUTDIR}/${FINAL_PDF}"
